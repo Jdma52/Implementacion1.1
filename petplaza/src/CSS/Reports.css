@@ -1,0 +1,152 @@
+.reports-container {
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.date-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-picker input {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.stats-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 15px 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.stats-card h3 {
+  font-size: 1.3rem;
+  margin: 0;
+  color: #222;
+}
+
+.stats-card p {
+  font-size: 0.9rem;
+  color: #777;
+  margin: 0;
+}
+
+.stats-card .icon {
+  width: 28px;
+  height: 28px;
+  color: #16a34a;
+}
+
+.reports-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+
+.report-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.report-header h2 {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.report-header button {
+  background: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.report-header button:hover {
+  background: #15803d;
+}
+
+.sales-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sales-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bar-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bar {
+  height: 10px;
+  background: #16a34a;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.value {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.inventory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inventory-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 6px;
+}
+
+.inventory-item strong {
+  color: #222;
+}

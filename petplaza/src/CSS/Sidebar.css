@@ -1,0 +1,215 @@
+/* ===== Sidebar wrapper para aislamiento de estilos ===== */
+.sidebar-wrapper .sidebar { 
+  width: 250px; /* ancho fijo del sidebar */
+  background: #111827; /* fondo gris muy oscuro */
+  color: #fff; /* color por defecto del texto */
+  height: 100vh; /* ocupa toda la altura de la ventana */
+  display: flex; /* activa flexbox para ordenar hijos verticalmente */
+  flex-direction: column; /* organiza hijos en columna */
+  position: fixed; /* sidebar fijo en pantalla */
+  left: 0; /* pegado al borde izquierdo */
+  top: 0; /* pegado al borde superior */
+  padding: 1rem; /* espacio interior general */
+  padding-bottom: 1.5rem; /* espacio extra abajo para la tarjeta */
+  transition: transform 0.3s ease; /* animación suave al abrir/cerrar */
+  z-index: 50; /* prioridad de apilamiento */
+}
+
+/* ===== Header del logo ===== */
+.sidebar-wrapper .sidebar-header { 
+  margin-bottom: 1.5rem; /* espacio aumentado para que la línea gris baje */
+  cursor: pointer; /* indica que es clickeable */
+  padding-left: 3.7rem; /* desplaza logo + texto a la derecha */
+  margin-top: 0.9rem; /* espacio superior */
+}
+
+/* Contenedor logo + textos (alineados horizontalmente) */
+.sidebar-wrapper .logo-container { 
+  display: flex; /* logo y texto en fila */
+  align-items: center; /* centra verticalmente */
+  gap: 0.8rem; /* espacio entre logo y texto */
+}
+
+/* Imagen del logo */
+.sidebar-wrapper .sidebar-logo { 
+  width: 45px; /* ancho del logo */
+  height: 45px; /* alto del logo */
+  border-radius: 8px; /* esquinas redondeadas */
+  object-fit: cover; /* ajusta imagen para cubrir área */
+  flex-shrink: 0; /* evita que se reduzca */
+}
+
+/* Contenedor del texto del logo */
+.sidebar-wrapper .logo-text { 
+  display: flex; /* flexbox para organizar textos */
+  flex-direction: column; /* columna interna */
+  line-height: 1.2; /* compacta líneas */
+}
+
+/* Título principal */
+.sidebar-wrapper .sidebar-title { 
+  font-size: 1rem; /* tamaño del título */
+  font-weight: bold; /* negrita */
+  color: #ffffff; /* blanco */
+  margin: 0; /* elimina márgenes por defecto */
+}
+
+/* Subtítulo */
+.sidebar-wrapper .sidebar-subtitle { 
+  font-size: 0.75rem; /* más pequeño que título */
+  color: #9ca3af; /* gris suave */
+  margin: 0; /* elimina márgenes */
+}
+
+/* ===== Menú ===== */
+.sidebar-wrapper .sidebar-menu { 
+  flex: 1; /* ocupa espacio vertical restante */
+  display: flex; /* organiza los items en columna */
+  flex-direction: column; /* columna vertical */
+  gap: 0.6rem; /* separación entre items */
+  overflow-y: auto; /* scroll si hay muchos items */
+  padding-right: 5px; /* espacio para scrollbar */
+  padding-top: 1.5rem; /* separa más la línea divisoria del logo */
+  border-top: 1px solid #374151; /* línea de división gris */
+}
+
+/* ===== Scroll (WebKit) ===== */
+.sidebar-wrapper .sidebar-menu::-webkit-scrollbar { 
+  width: 6px; /* grosor de scrollbar */
+}
+.sidebar-wrapper .sidebar-menu::-webkit-scrollbar-thumb { 
+  background: #374151; /* color del pulgar */
+  border-radius: 3px; /* bordes redondeados */
+}
+.sidebar-wrapper .sidebar-menu::-webkit-scrollbar-thumb:hover { 
+  background: #4b5563; /* color al hover */
+}
+
+/* ===== Items del menú ===== */
+.sidebar-wrapper .sidebar-item { 
+  display: flex; /* ícono + texto en fila */
+  align-items: center; /* centrado vertical */
+  gap: 0.8rem; /* separación entre ícono y texto */
+  padding: 0.6rem 1rem; /* espacio interno */
+  border-radius: 0.5rem; /* esquinas redondeadas */
+  color: #d1d5db; /* gris claro */
+  text-decoration: none; /* elimina subrayado */
+  transition: background 0.3s, color 0.3s; /* animaciones */
+}
+.sidebar-wrapper .sidebar-item:hover { 
+  background: #1f2937; /* gris más oscuro al hover */
+  color: #fff; /* texto blanco */
+}
+.sidebar-wrapper .sidebar-item.active { 
+  background: #2563eb; /* azul para activo */
+  color: #fff; /* texto blanco */
+}
+
+/* ===== Iconos dentro de items ===== */
+.sidebar-wrapper .sidebar-icon { 
+  width: 22px; /* ancho fijo */
+  height: 22px; /* alto fijo */
+  margin-right: 10px; /* espacio extra a la derecha */
+  transition: transform 0.3s ease, filter 0.3s ease; /* suaviza animaciones */
+}
+.sidebar-wrapper .sidebar-item:hover .sidebar-icon { 
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6)); /* glow blanco */
+}
+
+/* Animaciones iconos */
+.sidebar-wrapper .sidebar-icon.bounce:hover { animation: bounce 0.6s; }
+@keyframes bounce { 
+  0%,100% { transform: scale(1) translateY(0); }
+  30% { transform: scale(1.2) translateY(-3px); }
+  60% { transform: scale(0.9) translateY(2px); }
+}
+
+.sidebar-wrapper .sidebar-icon.pulse:hover { animation: pulse 0.8s infinite; }
+@keyframes pulse { 
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.sidebar-wrapper .sidebar-icon.spin:hover { animation: spin 0.6s linear; }
+@keyframes spin { 
+  from { transform: rotate(0deg) scale(1.1); }
+  to { transform: rotate(360deg) scale(1.1); }
+}
+
+/* ===== Tarjeta de usuario ===== */
+.sidebar-wrapper .sidebar-user { 
+  background: #1f2937; /* fondo gris oscuro */
+  padding: 0.7rem; /* espacio interno */
+  border-radius: 0.9rem; /* bordes redondeados */
+  display: flex; /* avatar + texto en fila */
+  align-items: center; /* centrado vertical */
+  gap: 0.6rem; /* separación entre avatar y texto */
+  margin-top: 0.3rem; /* pequeño espacio arriba */
+  margin-bottom: 2rem; /* espacio inferior normal */
+  font-size: 0.85rem; /* tamaño base */
+  border: 1px solid #374151; /* borde gris */
+  box-shadow: 0 6px 16px rgba(2,6,23,0.45); /* sombra */
+}
+.sidebar-wrapper .sidebar-user-avatar { 
+  width: 36px; 
+  height: 36px; 
+  background: #10b981; /* verde */
+  border-radius: 50%; /* círculo */
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  font-weight: 600; 
+  color: white; 
+  font-size: 1.1rem; 
+}
+.sidebar-wrapper .sidebar-user-name { 
+  font-weight: 500; 
+  font-size: 0.85rem; 
+  margin: 0; 
+}
+.sidebar-wrapper .sidebar-user-role { 
+  display: block; 
+  color: #9ca3af; 
+  font-size: 0.65rem; 
+  font-weight: 400; 
+  margin-left: 0; 
+  margin-top: -2px; 
+}
+
+/* ===== Botón hamburguesa ===== */
+.sidebar-wrapper .hamburger-btn { 
+  display: none; /* solo visible en móviles */
+  position: fixed; /* siempre fijo */
+  top: 1rem; 
+  left: 1rem; 
+  background: #111827; /* mismo color del sidebar */
+  border: none; 
+  color: white; 
+  padding: 0.5rem; 
+  border-radius: 0.5rem; 
+  z-index: 100; /* sobre todo */
+  cursor: pointer; 
+}
+
+/* ===== Overlay ===== */
+.sidebar-wrapper .sidebar-overlay { 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%; 
+  background: rgba(0,0,0,0.3); /* oscurece fondo */
+  z-index: 40; 
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) { 
+  .sidebar-wrapper .hamburger-btn { display: block; } /* se muestra botón */
+  .sidebar-wrapper .sidebar { transform: translateX(-100%); } /* oculto fuera de pantalla */
+  .sidebar-wrapper .sidebar.open { transform: translateX(0); } /* visible al abrir */
+
+  /* ✅ CORRECCIÓN: se aumenta separación inferior para que no se pegue */
+  .sidebar-wrapper .sidebar-user {
+    margin-bottom: 2.8rem; /* más espacio en pantallas pequeñas */
+  }
+}

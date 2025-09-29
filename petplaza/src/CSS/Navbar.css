@@ -1,0 +1,206 @@
+/* ===== WRAPPER ÚNICO PARA NAVBAR ===== */
+.navbar-wrapper { 
+  /* Este contenedor envolverá toda la Navbar y el modal para aislar estilos */
+}
+
+/* ===== NAVBAR GENERAL ===== */
+.navbar-wrapper .navbar {
+  height: 60px; /* Altura fija */
+  background: #ffffff; /* Fondo blanco */
+  border-bottom: 1px solid #e5e5e5; /* Línea inferior */
+  display: flex; /* Flexbox */
+  align-items: center; /* Centrado vertical */
+  justify-content: flex-end; /* Alineado a la derecha */
+  gap: 1rem; /* Espaciado entre items */
+  padding: 0 1.5rem; /* Espaciado lateral */
+  font-family: "Segoe UI", sans-serif; /* Fuente */
+}
+
+/* ===== ICONOS DE LA NAVBAR ===== */
+.navbar-wrapper .navbar-icon {
+  background: none; /* Sin fondo */
+  border: none; /* Sin borde */
+  cursor: pointer; /* Manito al pasar */
+  color: #444; /* Gris oscuro */
+  display: flex; /* Flex para centrar ícono */
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease; /* Transición suave */
+}
+.navbar-wrapper .navbar-icon:hover {
+  color: #000; /* Negro al hover */
+}
+
+/* ===== INFO USUARIO ===== */
+.navbar-wrapper .navbar-user {
+  text-align: right; /* Alineado a la derecha */
+}
+.navbar-wrapper .navbar-username {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: #222;
+}
+.navbar-wrapper .navbar-role {
+  font-size: 12px;
+  color: #777;
+}
+
+/* ===== AVATAR ===== */
+.navbar-wrapper .navbar-avatar {
+  width: 32px;
+  height: 32px;
+  background: #00b073; /* Verde */
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%; /* Círculo */
+}
+
+/* ===== MODAL OVERLAY (ÚNICO PARA LOGOUT) ===== */
+.navbar-wrapper .navbar-logout-modal-overlay {
+  position: fixed; /* Cubrir toda la pantalla */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4); /* Fondo oscuro translúcido */
+  display: flex; /* Flex para centrar contenido */
+  justify-content: center; /* Centrar horizontalmente */
+  align-items: center; /* Centrar verticalmente */
+  z-index: 200; /* Por encima de todo */
+  animation: fadeIn 0.3s ease; /* Fade-in al aparecer */
+  backdrop-filter: blur(5px); /* Desenfoque elegante */
+  -webkit-backdrop-filter: blur(5px); /* Compatibilidad Safari */
+}
+.navbar-wrapper .navbar-logout-modal-overlay.fade-out {
+  animation: fadeOut 0.3s ease forwards; /* Fade-out al cerrar */
+}
+
+/* ===== MODAL CONTENT (ÚNICO PARA LOGOUT) ===== */
+.navbar-wrapper .navbar-logout-modal-content {
+  background: #fff; /* Fondo blanco */
+  padding: 1.5rem; /* Espaciado interno */
+  border-radius: 12px; /* Bordes redondeados */
+  width: 35%; /* Más pequeño que antes en escritorio */
+  max-width: 300px; /* Tamaño máximo absoluto */
+  min-width: 250px; /* Tamaño mínimo absoluto */
+  text-align: center; /* Centrar contenido */
+  position: relative; /* Para el botón de cerrar */
+  animation: zoomIn 0.3s ease; /* Zoom-in al aparecer */
+}
+.navbar-wrapper .navbar-logout-modal-content.fade-out {
+  animation: zoomOut 0.3s ease forwards; /* Zoom-out al cerrar */
+}
+
+/* ===== BOTÓN CERRAR (X) ===== */
+.navbar-wrapper .navbar-logout-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none; /* Sin fondo */
+  border: none; /* Sin borde */
+  cursor: pointer;
+  color: #666; /* Gris oscuro */
+  transition: color 0.3s; /* Transición suave */
+}
+.navbar-wrapper .navbar-logout-modal-close:hover {
+  color: #000; /* Negro al pasar */
+}
+
+/* ===== TÍTULO MODAL ===== */
+.navbar-wrapper .navbar-logout-modal-title {
+  margin: 0 0 1.5rem 0; /* Separación inferior */
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #111;
+}
+
+/* ===== ACCIONES DEL MODAL (BOTONES) ===== */
+.navbar-wrapper .navbar-logout-modal-actions {
+  display: flex; /* Flex fila */
+  justify-content: center; /* Centrar botones */
+  gap: 1rem; /* Espacio entre botones */
+  margin-top: 1rem; /* Separación superior */
+}
+
+/* ===== BOTÓN CONFIRMAR (SÍ) ===== */
+.navbar-wrapper .btn-logout-confirm {
+  background: #00b073; /* Verde */
+  color: #fff; /* Texto blanco */
+  padding: 0.6rem 1.3rem; /* Tamaño uniforme */
+  border-radius: 6px; /* Bordes redondeados */
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease; /* Transición general */
+}
+.navbar-wrapper .btn-logout-confirm:hover {
+  background: #00c985; /* Verde más claro */
+  box-shadow: 0 0 8px rgba(0, 192, 115, 0.6); /* Brillo verde suave */
+  transform: scale(1.05); /* Leve zoom */
+}
+
+/* ===== BOTÓN CANCELAR (NO) - ROJO, MISMO ESTILO QUE SÍ ===== */
+.navbar-wrapper .btn-logout-cancel {
+  background: #e74c3c; /* Rojo */
+  color: #fff; /* Texto blanco */
+  padding: 0.6rem 1.3rem; /* Tamaño uniforme igual que Sí */
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease; /* Misma animación */
+}
+.navbar-wrapper .btn-logout-cancel:hover {
+  background: #ff6b5c; /* Rojo más claro */
+  box-shadow: 0 0 8px rgba(231, 76, 60, 0.6); /* Brillo rojo */
+  transform: scale(1.05); /* Leve zoom */
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes zoomIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes zoomOut {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.9); opacity: 0; }
+}
+
+/* ===== RESPONSIVO ESPECÍFICO DEL MODAL ===== */
+@media (max-width: 480px) {
+  .navbar-wrapper .navbar-logout-modal-content {
+    width: 60%; /* Tamaño pequeño en responsive, independiente del escritorio */
+    max-width: 250px; /* Máximo ancho */
+    min-width: 200px; /* Mínimo ancho */
+  }
+  .navbar-wrapper .navbar-logout-modal-actions {
+    flex-direction: column; /* Apilar botones verticalmente */
+    gap: 0.6rem; /* Espacio entre botones */
+  }
+}
+
+/* ===== RESPONSIVO DE NAVBAR ===== */
+@media (max-width: 768px) {
+  .navbar-wrapper .navbar {
+    justify-content: flex-end; /* Iconos alineados a la derecha */
+    padding: 0 1rem; /* Menor padding */
+    gap: 0.5rem; /* Menor espacio entre iconos */
+  }
+  .navbar-wrapper .navbar-user {
+    display: none; /* Ocultar nombre/rol en móviles */
+  }
+}

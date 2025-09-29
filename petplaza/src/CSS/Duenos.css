@@ -1,0 +1,406 @@
+/* ==========================================================
+   CONTENEDOR GENERAL DE LA VISTA DE DUEÑOS
+   ========================================================== */
+.owners-container {
+  padding: 1rem; /* Espacio interno de todo el contenedor */
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* Fuente principal */
+  background: #f9fafb; /* Color de fondo gris muy claro */
+  color: #374151; /* Color de texto predeterminado */
+}
+
+/* ==========================================================
+   HEADER (TÍTULO Y BOTÓN)
+   ========================================================== */
+.owners-container .owners-header {
+  display: flex; /* Usamos flex para alinear horizontalmente */
+  justify-content: space-between; /* Título a la izquierda, botón a la derecha */
+  align-items: center; /* Centrar verticalmente */
+  margin-bottom: 0.8rem; /* Separación inferior */
+}
+
+.owners-container .owners-title {
+  font-size: 1.1rem; /* Tamaño del título */
+  font-weight: 600; /* Negrita semipesada */
+  margin: 0; /* Sin margen */
+  color: #111827; /* Color principal del título */
+}
+
+.owners-container .owners-subtitle {
+  font-size: 0.8rem; /* Tamaño más pequeño para subtítulo */
+  color: #6b7280; /* Gris medio */
+  margin: 0.2rem 0 0; /* Pequeño margen superior */
+}
+
+/* ==========================================================
+   BOTONES GENERALES
+   ========================================================== */
+.owners-container .btn-primary,
+.owners-container .modal-actions .btn-secondary {
+  padding: 0.4rem 0.8rem; /* Espaciado interno */
+  border-radius: 6px; /* Bordes redondeados */
+  display: flex; /* Para alinear iconos y texto */
+  align-items: center; /* Centrar iconos verticalmente */
+  gap: 0.4rem; /* Espacio entre icono y texto */
+  font-size: 0.85rem; /* Tamaño de fuente */
+  font-weight: 500; /* Seminegrita */
+  cursor: pointer; /* Cambio de cursor al pasar sobre el botón */
+  transition: all 0.3s ease; /* Animación suave al hover/focus */
+  border: 1px solid transparent; /* Inicialmente sin borde visible */
+}
+
+/* Botón verde principal (ej. "Nuevo dueño") */
+.owners-container .btn-primary {
+  background: #00a884; /* Verde principal */
+  color: #fff; /* Texto blanco */
+  border: none; /* Sin borde */
+  border-radius: 12px; /* Bordes más redondeados */
+}
+
+.owners-container .btn-primary:hover,
+.owners-container .btn-primary:focus {
+  box-shadow: 0 0 10px rgba(4, 255, 96, 0.842); /* Sombra al pasar mouse */
+  transform: translateY(-2px); /* Efecto de elevación */
+  outline: none; /* Sin contorno */
+}
+
+/* ==========================================================
+   BOTÓN CANCELAR GENÉRICO EN MODAL
+   ========================================================== */
+.owners-container .modal-actions .btn-secondary.cancel {
+  background: #c9c5c5; /* Gris claro */
+  border: 2px solid #b8b7b7; /* Borde gris */
+  color: #000000; /* Texto negro */
+  transition: all 0.3s ease; /* Animación suave */
+}
+
+.owners-container .modal-actions .btn-secondary.cancel:hover,
+.owners-container .modal-actions .btn-secondary.cancel:focus {
+  box-shadow: 0 0 12px rgb(121, 72, 114); /* Sombra violeta */
+  transform: translateY(-2px); /* Efecto de elevación */
+  outline: none; /* Sin contorno */
+}
+
+/* ==========================================================
+   BUSCADOR
+   ========================================================== */
+.owners-container .search-box {
+  display: flex; /* Flex para colocar icono e input juntos */
+  align-items: center; /* Centrar verticalmente */
+  background: #fff; /* Fondo blanco */
+  border: 1.9px solid #d1d5db; /* Borde gris */
+  border-radius: 10px; /* Bordes redondeados */
+  padding: 0.5rem 0.4rem; /* Espaciado interno: top/bottom y left/right */
+  margin-bottom: 0.8rem; /* Separación inferior */
+  max-width: 400px; /* Ancho máximo */
+  transition: all 0.3s ease; /* Transición suave */
+  position: relative; /* Para colocar la lupa absolutamente */
+}
+
+.owners-container .search-box:hover,
+.owners-container .search-box:focus-within {
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); /* Sombra azul al foco */
+  border-color: #3b82f6; /* Cambia el color del borde al foco */
+}
+
+/* Lupa del buscador */
+.owners-container .search-icon {
+  position: absolute; /* Posición absoluta dentro del search-box */
+  left: 0.6rem; /* Espacio desde el borde izquierdo */
+  top: 50%; /* Centrar verticalmente */
+  transform: translateY(-50%); /* Ajusta para centrar exactamente */
+  color: #6b7280; /* Gris medio */
+  margin: 0; /* Sin margen */
+}
+
+/* Input del buscador */
+.owners-container .search-box input {
+  border: none; /* Sin borde */
+  outline: none; /* Sin contorno */
+  flex: 1; /* Ocupa todo el espacio disponible */
+  background: transparent; /* Fondo transparente */
+  font-size: 0.85rem; /* Tamaño de fuente */
+  color: #374151; /* Color del texto */
+  padding-left: 2.2rem; /* Espacio para la lupa */
+}
+
+/* ==========================================================
+   TABLA DE DUEÑOS
+   ========================================================== */
+.owners-container .table-wrapper {
+  overflow-x: auto; /* Scroll horizontal si la tabla es muy ancha */
+}
+
+.owners-container .owners-table {
+  width: 100%; /* Ancho completo */
+  border-collapse: separate; /* Separar celdas para redondear bordes */
+  border-spacing: 0 6px; /* Espacio vertical entre filas */
+  background: transparent; /* Fondo transparente */
+  table-layout: auto; /* Columnas automáticas */
+}
+
+.owners-container .owners-table th,
+.owners-container .owners-table td {
+  padding: 0.5rem 0.8rem; /* Espaciado interno */
+  font-size: 0.8rem; /* Tamaño de texto */
+  text-align: left; /* Alinear a la izquierda */
+  vertical-align: middle; /* Centrar verticalmente */
+  white-space: nowrap; /* Evitar quiebre de línea */
+}
+
+.owners-container .owners-table th {
+  color: #6b7280; /* Gris medio */
+  font-weight: 600; /* Seminegrita */
+  font-size: 0.75rem; /* Más pequeño que celdas */
+  text-transform: uppercase; /* Letras mayúsculas */
+  letter-spacing: 0.03em; /* Espaciado entre letras */
+}
+
+.owners-container .owners-table tr {
+  background: #fff; /* Fondo blanco */
+  border-radius: 6px; /* Bordes redondeados */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Sombra ligera */
+}
+
+.owners-container .owners-table td {
+  color: #374151; /* Color del texto */
+  border-top: 1px solid #f0f0f0; /* Borde superior de celda */
+  border-bottom: 1px solid #f0f0f0; /* Borde inferior de celda */
+}
+
+.owners-container .owners-table td:first-child {
+  border-top-left-radius: 6px; /* Redondear esquina superior izquierda */
+  border-bottom-left-radius: 6px; /* Redondear esquina inferior izquierda */
+}
+
+.owners-container .owners-table td:last-child {
+  border-top-right-radius: 6px; /* Redondear esquina superior derecha */
+  border-bottom-right-radius: 6px; /* Redondear esquina inferior derecha */
+}
+
+/* ==========================================================
+   AVATAR E INFO DEL DUEÑO
+   ========================================================== */
+.owners-container .owner-info {
+  display: flex; /* Flex para avatar y nombre */
+  align-items: center; /* Centrar verticalmente */
+  gap: 0.4rem; /* Espacio entre avatar y nombre */
+}
+
+.owners-container .owner-avatar {
+  width: 28px; /* Ancho del avatar */
+  height: 28px; /* Alto del avatar */
+  border-radius: 50%; /* Circular */
+  background: #dcfce7; /* Fondo verde muy claro */
+  color: #15803d; /* Texto verde oscuro */
+  display: flex; /* Flex para centrar iniciales */
+  align-items: center; /* Centrar verticalmente */
+  justify-content: center; /* Centrar horizontalmente */
+  font-size: 0.75rem; /* Tamaño de fuente */
+  font-weight: 600; /* Seminegrita */
+}
+
+/* ==========================================================
+   ACCIONES (EDITAR Y ELIMINAR)
+   ========================================================== */
+.owners-container .action-buttons {
+  display: flex; /* Flex para botones */
+  gap: 0.3rem; /* Espacio entre botones */
+}
+
+.owners-container .action-btn {
+  border: none; /* Sin borde */
+  cursor: pointer; /* Cursor puntero */
+  padding: 0.3rem; /* Espaciado interno */
+  border-radius: 4px; /* Bordes redondeados */
+  font-size: 0.85rem; /* Tamaño de texto */
+  transition: all 0.2s ease; /* Transición suave */
+}
+
+.owners-container .action-btn.edit {
+  background: #e0f2fe; /* Azul claro */
+  color: #0369a1; /* Azul oscuro */
+}
+
+.owners-container .action-btn.edit:hover,
+.owners-container .action-btn.edit:focus {
+  transform: scale(1.15); /* Agranda ligeramente */
+  box-shadow: 0 0 8px rgba(17, 153, 226, 0.9); /* Sombra azul */
+}
+
+.owners-container .action-btn.delete {
+  background: #fee2e2; /* Rojo claro */
+  color: #f80101; /* Rojo intenso */
+}
+
+.owners-container .action-btn.delete:hover,
+.owners-container .action-btn.delete:focus {
+  transform: scale(1.1); /* Agranda ligeramente */
+  box-shadow: 0 0 6px rgba(255, 2, 2, 0.8); /* Sombra roja */
+}
+
+/* Estado vacío */
+.owners-container .empty-state {
+  text-align: center; /* Centrado */
+  padding: 0.8rem; /* Espaciado interno */
+  font-style: italic; /* Cursiva */
+  font-size: 0.85rem; /* Tamaño de texto */
+  color: #57484886; /* Gris semi-transparente */
+}
+
+/* ==========================================================
+   MODAL GENERAL (FORMULARIOS Y CONFIRMACIÓN)
+   ========================================================== */
+.owners-container .modal-overlay {
+  position: fixed; /* Fijo sobre toda la pantalla */
+  inset: 0; /* Ocupar toda la pantalla */
+  background: rgba(0,0,0,0.4); /* Fondo semitransparente */
+  display: flex; /* Flex para centrar modal */
+  align-items: center; /* Centrar verticalmente */
+  justify-content: center; /* Centrar horizontalmente */
+  z-index: 50; /* Encima de otros elementos */
+}
+
+.owners-container .modal {
+  background: #fff; /* Fondo blanco */
+  border-radius: 6px; /* Bordes redondeados */
+  padding: 1rem; /* Espaciado interno */
+  width: 100%; /* Ancho máximo completo */
+  max-width: 380px; /* Ancho máximo */
+  max-height: 85vh; /* Altura máxima */
+  overflow-y: auto; /* Scroll vertical si contenido excede */
+  animation: fadeIn 0.3s ease; /* Animación de aparición */
+}
+
+.owners-container .modal.closing {
+  animation: fadeOut 0.3s ease forwards; /* Animación de cierre */
+}
+
+.owners-container .modal h2 {
+  margin: 0 0 0.8rem 0; /* Márgenes superiores e inferiores */
+  font-size: 1rem; /* Tamaño de título */
+}
+
+.owners-container .modal label {
+  display: flex; /* Flex para inputs */
+  flex-direction: column; /* Colocar label arriba del input */
+  gap: 0.2rem; /* Espacio entre label e input */
+  font-size: 0.8rem; /* Tamaño de texto */
+  margin-bottom: 0.6rem; /* Espaciado inferior */
+}
+
+.owners-container .modal input,
+.owners-container .modal textarea {
+  border: 1px solid #ddd; /* Borde gris claro */
+  border-radius: 4px; /* Bordes redondeados */
+  padding: 0.4rem; /* Espaciado interno */
+  font-size: 0.85rem; /* Tamaño de fuente */
+}
+
+.owners-container .modal-actions {
+  display: flex; /* Flex para botones */
+  justify-content: flex-end; /* Alinea a la derecha */
+  gap: 0.4rem; /* Espacio entre botones */
+}
+
+/* ==========================================================
+   MODAL DE CONFIRMACIÓN ELIMINAR (NUEVO ESTILO)
+   ========================================================== */
+.owners-container .delete-modal h2 {
+  margin: 0; /* Sin margen */
+  font-size: 1.1rem; /* Tamaño de título */
+  font-weight: 600; /* Seminegrita */
+  color: #065f46; /* Verde oscuro */
+}
+
+.owners-container .delete-modal p {
+  margin: 0 0 1rem 0; /* Se agregó margen inferior para separar botones */
+  font-size: 0.9rem; /* Tamaño de texto */
+  color: #374151; /* Gris oscuro */
+  line-height: 1.4; /* Altura de línea */
+}
+
+.owners-container .delete-modal .modal-actions {
+  display: flex; /* Flex */
+  justify-content: center; /* Centrar botones */
+  gap: 0.6rem; /* Espacio entre botones */
+}
+
+/* Botones verde y gris del modal */
+.owners-container .delete-modal .btn-danger {
+  background-color: #0cca6b; /* Verde brillante */
+  color: #fff; /* Texto blanco */
+  border: 2px solid transparent; /* Borde inicial */
+  padding: 0.5rem 0.9rem; /* Espaciado interno */
+  font-size: 0.85rem; /* Tamaño de fuente */
+  font-weight: 600; /* Seminegrita */
+  border-radius: 6px; /* Bordes redondeados */
+  cursor: pointer; /* Cursor puntero */
+  transition: all 0.3s ease; /* Transición suave */
+}
+
+.owners-container .delete-modal .btn-danger:hover {
+  background-color: #bbf7d0; /* Verde claro */
+  color: #065f46; /* Texto verde oscuro */
+  border: 2px solid #065f46; /* Borde verde oscuro */
+  box-shadow: 0 0 8px #065f46; /* Sombra */
+  transform: translateY(-1px); /* Efecto elevación */
+}
+
+.owners-container .delete-modal .btn-cancel-alt {
+  background-color: #d1d5db; /* Gris claro */
+  color: #374151; /* Gris oscuro */
+  border: 2px solid transparent; /* Sin borde */
+  padding: 0.5rem 0.9rem; /* Espaciado interno */
+  font-size: 0.85rem; /* Tamaño de fuente */
+  font-weight: 600; /* Seminegrita */
+  border-radius: 6px; /* Bordes redondeados */
+  cursor: pointer; /* Cursor puntero */
+  transition: all 0.3s ease; /* Transición suave */
+}
+
+.owners-container .delete-modal .btn-cancel-alt:hover {
+  background-color: #f3f4f6; /* Gris más claro */
+  color: #1e40af; /* Azul oscuro */
+  border: 2px solid #1e40af; /* Borde azul */
+  box-shadow: 0 0 6px #3b82f6; /* Sombra azul */
+  transform: translateY(-1px); /* Elevación */
+}
+
+/* ==========================================================
+   ANIMACIONES
+   ========================================================== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); } /* Inicia invisible y un poco arriba */
+  to { opacity: 1; transform: translateY(0); } /* Termina visible y en posición */
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); } /* Visible */
+  to { opacity: 0; transform: translateY(-10px); } /* Desaparece hacia arriba */
+}
+
+/* ==========================================================
+   RESPONSIVO
+   ========================================================== */
+@media (max-width: 768px) {
+  .owners-container .owners-header {
+    flex-direction: column; /* Columnas en móviles */
+    align-items: flex-start; /* Alinear al inicio */
+    gap: 0.5rem; /* Espacio entre elementos */
+  }
+
+  .owners-container .btn-primary {
+    align-self: flex-end; /* Botón a la derecha */
+  }
+
+  .owners-container .owners-table th,
+  .owners-container .owners-table td {
+    font-size: 0.75rem; /* Fuente más pequeña */
+    padding: 0.4rem; /* Menor padding */
+  }
+
+  /* Aumentar ancho del buscador en responsividad */
+  .owners-container .search-box {
+    max-width: 100%; /* Ocupar todo el ancho disponible */
+  }
+}
