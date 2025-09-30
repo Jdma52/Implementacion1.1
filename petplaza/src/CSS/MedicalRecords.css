@@ -5,7 +5,7 @@
 }
 
 /* ====== Mensajes ====== */
-.confirmation-modal {
+.medical-container .confirmation-modal {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -20,24 +20,24 @@
 }
 
 /* ====== Header ====== */
-.medical-header {
+.medical-container .medical-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
-.medical-header h1 {
+.medical-container .medical-header h1 {
   margin: 0;
   font-size: 2rem;
-  color: #00a884;
+  color: #000;
 }
 
 /* ====== Botones principales ====== */
-.btn-primary {
-  background-color: #00a884;
-  color: white;
-  border: none;
-  padding: 8px 16px;
+.medical-container .btn-primary {
+  background: white;
+  color: #00a884;
+  border: 2px solid #00a884;
+  padding: 10px 18px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 700;
@@ -45,14 +45,14 @@
   align-items: center;
   gap: 8px;
   justify-content: center;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
-.btn-primary:hover {
-  background-color: #008063;
+.medical-container .btn-primary:hover {
+  background: #00a88422;
 }
 
-/* ====== Menú desplegable de "Nuevo Expediente" ====== */
-.dropdown-menu {
+/* ====== Menú desplegable ====== */
+.medical-container .dropdown-menu {
   position: absolute;
   top: 100%;
   right: 0;
@@ -63,14 +63,14 @@
   padding: 8px 0;
   display: none;
   flex-direction: column;
-  z-index: 5000; /* ✅ corrección: siempre encima */
+  z-index: 5000;
   min-width: 200px;
 }
-.dropdown-menu.show {
+.medical-container .dropdown-menu.show {
   display: flex;
   animation: dropdownFade 0.25s ease;
 }
-.dropdown-menu button {
+.medical-container .dropdown-menu button {
   background: none;
   border: none;
   text-align: left;
@@ -80,179 +80,152 @@
   transition: background 0.2s;
   width: 100%;
 }
-.dropdown-menu button:hover {
+.medical-container .dropdown-menu button:hover {
   background: #f5f5f5;
 }
 @keyframes dropdownFade {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ====== Filtros ====== */
-.medical-filters {
-  display: flex;
+.medical-container .medical-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 12px;
   margin-bottom: 24px;
+  align-items: center;
 }
-.medical-filters select,
-.medical-filters input[type="text"] {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  flex: 1;
-  font-size: 1rem;
-}
-.search-box {
-  position: relative;
-  flex: 2;
-}
-.search-icon {
-  position: absolute;
-  top: 50%;
-  left: 12px;
-  transform: translateY(-50%);
-  color: #999;
-  pointer-events: none;
-}
-.search-box input {
-  padding-left: 32px;
-}
-
-/* 🔹 Select de filtro con estilo */
-.filter-select {
-  padding: 8px 12px;
+.medical-container .medical-filters select,
+.medical-container .search-box input,
+.medical-container .filter-select {
+  height: 42px;
+  padding: 10px 14px;
   border-radius: 8px;
   border: 1px solid #ccc;
   font-size: 1rem;
-  background: white;
-  cursor: pointer;
+  box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
 }
-.filter-select:focus {
+.medical-container .medical-filters select:focus,
+.medical-container .search-box input:focus,
+.medical-container .filter-select:focus {
   outline: none;
   border-color: #00a884;
   box-shadow: 0 0 0 2px #00a88444;
 }
+.medical-container .search-box {
+  position: relative;
+  width: 100%;
+}
+.medical-container .search-icon {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: #777;
+  font-size: 16px;
+  pointer-events: none;
+}
+.medical-container .search-box input {
+  padding-left: 44px;
+}
+@media (max-width: 768px) {
+  .medical-container .medical-filters { grid-template-columns: 1fr; }
+}
 
 /* ====== Tarjetas ====== */
-.records-cards {
+.medical-container .records-cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 16px;
   justify-content: center;
 }
-.record-card,
-.surgery-card {
+.medical-container .record-card,
+.medical-container .surgery-card,
+.medical-container .care-card {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 0.05);
-  padding: 20px;
-  width: 320px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.08);
+  padding: 14px;
+  width: 280px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  overflow: hidden;
+  max-height: 140px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  justify-content: space-between;
 }
-.record-header h3,
-.surgery-card h3,
-.surgery-card h4 {
+.medical-container .record-card.expanded,
+.medical-container .surgery-card.expanded,
+.medical-container .care-card.expanded {
+  max-height: 1000px;
+  width: 100%;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+}
+.medical-container .record-card { border-left: 5px solid #00a884; }
+.medical-container .surgery-card { border-left: 5px solid #d44; }
+.medical-container .care-card { border-left: 5px solid #007bff; }
+.medical-container .surgery-card.orange { border-left: 5px solid orange; }
+.medical-container .care-card.orange { border-left: 5px solid orange; }
+
+/* ====== Encabezados de tarjetas ====== */
+.medical-container .record-header h3 {
   margin: 0;
   font-weight: 700;
-  font-size: 1.3rem;
-  color: #00a884;
+  font-size: 1.1rem;
+  color: #000 !important;
 }
-.card-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-  flex-wrap: wrap;
+.medical-container .record-header span {
+  font-size: 0.8rem;
+  color: #555;
 }
 
-/* ====== Botones acciones en tarjetas ====== */
-.btn-edit,
-.btn-delete,
-.btn-export-pdf {
+/* ====== Botones en tarjetas ====== */
+.medical-container .card-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.medical-container .btn-edit,
+.medical-container .btn-delete,
+.medical-container .btn-export-pdf {
   background: none;
   border: none;
   cursor: pointer;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 4px;
+  padding: 4px 6px;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   transition: background-color 0.2s ease;
 }
-.btn-edit {
-  color: #00a884;
-}
-.btn-edit:hover {
-  background-color: #00a88422;
-}
-.btn-delete {
-  color: #d44;
-}
-.btn-delete:hover {
-  background-color: #d4404022;
-}
-.btn-export-pdf {
-  color: #444;
-}
-.btn-export-pdf:hover {
-  background-color: #44444422;
-}
-
-/* ====== Botones secundarios ====== */
-.btn-surgery {
-  color: #00a884;
-  background: none;
-  border: 1px solid #00a88444;
-  cursor: pointer;
-  font-weight: 700;
-  flex: 1;
-  height: 42px;
-  font-size: 1rem;
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: background-color 0.2s ease;
-}
-.btn-surgery:hover {
-  background-color: #00a88422;
-}
+.medical-container .btn-edit { color: #00a884; }
+.medical-container .btn-edit:hover { background-color: #00a88422; }
+.medical-container .btn-delete { color: #d44; }
+.medical-container .btn-delete:hover { background-color: #d4404022; }
+.medical-container .btn-export-pdf { color: #444; }
+.medical-container .btn-export-pdf:hover { background-color: #44444422; }
 
 /* ====== Secciones ====== */
-.record-section h4 {
+.medical-container .record-section h4 {
   margin-bottom: 4px;
   font-weight: 600;
   color: #00a884;
 }
-.modified-msg {
+.medical-container .modified-msg {
   font-style: italic;
   font-size: 0.8rem;
   color: #888;
 }
 
-/* Historial quirúrgico */
-.record-section.historial p {
-  font-weight: bold;
-}
-.record-section.historial p.si {
-  color: #00a884;
-}
-.record-section.historial p.no {
-  color: #d44;
-}
-
 /* ====== Estado vacío ====== */
-.empty-state {
+.medical-container .empty-state {
   font-size: 1.2rem;
   color: #999;
   text-align: center;
@@ -261,7 +234,7 @@
 }
 
 /* ====== Modales ====== */
-.modal-overlay {
+.medical-container .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -273,76 +246,81 @@
   align-items: center;
   z-index: 2000;
 }
-.modal {
+.medical-container .modal {
   background: white;
   border-radius: 12px;
   padding: 24px;
-  width: 440px;
-  max-width: 90vw;
+  width: 480px;
+  max-width: 95vw;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.3);
   position: relative;
-  resize: both;
-  min-width: 320px;
-  min-height: 300px;
 }
-.modal-header h2 {
+.medical-container .modal-header h2 {
   margin: 0 0 16px 0;
   color: #00a884;
   font-weight: 700;
 }
-.modal-close {
+
+/* ====== Botón "Brocha" ====== */
+.medical-container .modal-clean {
   position: absolute;
   top: 16px;
   right: 16px;
-  background: #d44;
-  border: none;
-  color: white;
-  width: 32px;
-  height: 32px;
+  background: white;
+  border: 2px solid #00a884;
+  color: #00a884;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
 }
-.modal-close:hover {
-  background: #b33;
+.medical-container .modal-clean:hover {
+  background: #00a88422;
 }
-.modal-body label {
+
+/* ====== Campos de formularios ====== */
+.medical-container .modal-body label {
   display: block;
   margin-top: 12px;
   font-weight: 600;
   color: #00a884;
 }
-.modal-body input,
-.modal-body select,
-.modal-body textarea {
+.medical-container .modal-body input,
+.medical-container .modal-body select,
+.medical-container .modal-body textarea {
   width: 100%;
+  height: 42px;
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid #ccc;
   margin-top: 6px;
   font-size: 1rem;
   font-family: inherit;
+  box-sizing: border-box;
 }
-.modal-body textarea {
-  min-height: 60px;
+.medical-container .modal-body textarea {
+  min-height: 70px;
+  height: auto;
+  resize: vertical;
 }
 
-/* ====== Botones unificados dentro de modales ====== */
-.unified-buttons {
+/* ====== Botones en modales ====== */
+.medical-container .unified-buttons {
   display: flex;
-  flex-wrap: wrap; /* ✅ ahora los botones bajan a otra fila si no caben */
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 20px;
 }
-.unified-buttons button,
-.unified-buttons label.btn-export {
-  flex: 1 1 45%; /* ✅ cada botón ocupa casi la mitad del ancho */
-  min-width: 120px; /* ✅ no se encogen demasiado */
+.medical-container .unified-buttons button,
+.medical-container .unified-buttons label.btn-export {
+  flex: 1 1 45%;
+  min-width: 120px;
   height: 42px;
   font-size: 1rem;
   border-radius: 8px;
@@ -353,44 +331,16 @@
   gap: 6px;
   text-align: center;
   cursor: pointer;
-}
-
-/* Botón cancelar */
-.btn-cancel {
+  background: white;
   color: #00a884;
-  background: none;
-  border: 1px solid #00a88444;
-  transition: background-color 0.2s ease;
+  border: 2px solid #00a884;
+  transition: all 0.2s ease;
 }
-.btn-cancel:hover {
-  background-color: #00a88422;
+.medical-container .unified-buttons button:hover,
+.medical-container .unified-buttons label.btn-export:hover {
+  background: #00a88422;
 }
-
-/* Botón guardar */
-.btn-primary {
-  background-color: #00a884;
-  color: white;
-  border: none;
-  transition: background-color 0.2s ease;
-}
-.btn-primary:hover {
-  background-color: #008063;
-}
-
-/* Botón exportar */
-.btn-export {
-  color: #00a884 !important;
-  background: none;
-  border: 1px solid #00a88444;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-.btn-export:hover {
-  background-color: #00a88422;
-}
-.btn-export input[type="file"] {
+.medical-container .btn-export input[type="file"] {
   position: absolute;
   left: 0;
   top: 0;
@@ -401,27 +351,25 @@
 }
 
 /* ====== Galería imágenes ====== */
-.image-gallery {
+.medical-container .image-gallery {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
-.record-image,
-.image-preview {
+.medical-container .record-image,
+.medical-container .image-preview {
   max-width: 120px;
   max-height: 120px;
   border-radius: 8px;
   cursor: pointer;
   transition: transform 0.2s ease;
 }
-.record-image:hover {
-  transform: scale(1.05);
-}
-.image-container {
+.medical-container .record-image:hover { transform: scale(1.05); }
+.medical-container .image-container {
   position: relative;
   display: inline-block;
 }
-.delete-image-btn {
+.medical-container .delete-image-btn {
   position: absolute;
   top: 6px;
   right: 6px;
@@ -432,12 +380,10 @@
   border-radius: 50%;
   cursor: pointer;
 }
-.delete-image-btn:hover {
-  background: rgba(0, 0, 0, 0.9);
-}
+.medical-container .delete-image-btn:hover { background: rgba(0, 0, 0, 0.9); }
 
-/* Imagen fullscreen */
-.image-modal-overlay {
+/* ====== Imagen fullscreen ====== */
+.medical-container .image-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -452,18 +398,18 @@
   opacity: 0;
   transition: opacity 0.2s ease, visibility 0s linear 0.2s;
 }
-.image-modal-overlay.active {
+.medical-container .image-modal-overlay.active {
   visibility: visible;
   opacity: 1;
 }
-.image-modal {
+.medical-container .image-modal {
   max-width: 90%;
   max-height: 90%;
   border-radius: 12px;
 }
 
 /* ====== Confirmaciones ====== */
-.delete-confirmation {
+.medical-container .delete-confirmation {
   background: white;
   border-radius: 12px;
   padding: 20px;
@@ -471,12 +417,12 @@
   text-align: center;
   box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
-.delete-confirmation h3 {
+.medical-container .delete-confirmation h3 {
   margin-bottom: 12px;
   color: #d44;
   font-weight: 700;
 }
-.delete-confirmation button {
+.medical-container .delete-confirmation button {
   margin: 8px;
   padding: 8px 16px;
   border-radius: 8px;
@@ -484,25 +430,22 @@
   font-weight: 600;
   border: none;
 }
-.btn-accept {
+.medical-container .btn-accept {
   background: #d44;
   color: white;
 }
-.btn-accept:hover {
-  background: #b33;
-}
-.btn-cancel-delete {
+.medical-container .btn-accept:hover { background: #b33; }
+.medical-container .btn-cancel-delete {
   background: #ccc;
   color: #333;
 }
-.btn-cancel-delete:hover {
-  background: #bbb;
-}
+.medical-container .btn-cancel-delete:hover { background: #bbb; }
 
 /* ====== Ocultar elementos en PDF ====== */
-.pdf-hidden .btn-edit,
-.pdf-hidden .btn-delete,
-.pdf-hidden .btn-primary,
-.pdf-hidden .btn-export-pdf {
+.medical-container .pdf-hidden .btn-edit,
+.medical-container .pdf-hidden .btn-delete,
+.medical-container .pdf-hidden .btn-primary,
+.medical-container .pdf-hidden .btn-export-pdf,
+.medical-container .pdf-hidden .btn-care {
   display: none !important;
 }
