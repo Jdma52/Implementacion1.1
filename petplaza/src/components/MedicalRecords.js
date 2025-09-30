@@ -1,8 +1,7 @@
 // src/components/MedicalRecords.js
 import React, { useState, useRef } from "react";
-import { Plus, Search, Edit, Trash2, FileDown, X } from "lucide-react";
+import { Plus, Search, Edit, Trash2, FileDown, Brush } from "lucide-react";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import "../CSS/MedicalRecords.css";
 
 /* =========================
@@ -43,6 +42,7 @@ const initialSurgeryRecord = () => ({
   date: "",
   time: "",
   owner: "",
+  ownerPhone: "",
   ownerId: "",
   pet: "",
   species: "",
@@ -54,17 +54,19 @@ const initialSurgeryRecord = () => ({
   risks: ["", "", "", "", "", ""],
   images: [],
   createdAt: null,
+  fromGeneral: false, // false = creado desde "Nuevo expediente" → línea naranja
 });
 
 const initialCareRecord = () => ({
   id: null,
   generalId: null, // vínculo opcional al expediente general
   owner: "",
+  ownerPhone: "",
   pet: "",
   species: "",
   branch: "",
   instructions: "",
-  meds: "",      // date
+  meds: "", // date
   foodWater: "", // date
   exercise: "",
   sutures: "",
@@ -73,6 +75,7 @@ const initialCareRecord = () => ({
   emergencyContact: "",
   images: [],
   createdAt: null,
+  fromGeneral: false, // false = creado desde "Nuevo expediente" → línea naranja
 });
 
 /* =========================
@@ -80,29 +83,7 @@ const initialCareRecord = () => ({
  * ========================= */
 const MedicalRecords = () => {
   /* ====== Estados raíz ====== */
-  const [generalRecords, setGeneralRecords] = useState([
-    // Ejemplo inicial
-    {
-      ...initialGeneralRecord(),
-      id: 1,
-      owner: "Juan Pérez",
-      ownerPhone: "9999-9999",
-      pet: "Max",
-      species: "Perro",
-      gender: "Macho",
-      breed: "Labrador",
-      weight: "10 kg",
-      color: "Marrón",
-      bloodDonor: "Sí",
-      ccToApply: "Ninguno",
-      date: "2025-09-24",
-      vet: "Dra. María González (Cardióloga)",
-      notes: "Mascota en excelente estado de salud",
-      branch: "Sucursal Central",
-      createdAt: new Date(),
-      modifiedAt: null,
-    },
-  ]);
+  const [generalRecords, setGeneralRecords] = useState([]);
   const [surgeryRecords, setSurgeryRecords] = useState([]);
   const [careRecords, setCareRecords] = useState([]);
 
@@ -115,23 +96,27 @@ const MedicalRecords = () => {
   const [showDropdown, setShowDropdown] = useState(false);
 
   /* ====== Modales ====== */
-  const [showModal, setShowModal] = useState(false);             // General
+  const [showModal, setShowModal] = useState(false); // General
   const [showSurgeryModal, setShowSurgeryModal] = useState(false); // Cirugía
-  const [showCareModal, setShowCareModal] = useState(false);     // Cuidados
+  const [showCareModal, setShowCareModal] = useState(false); // Cuidados
 
   /* ====== Edición ====== */
-  const [editingRecord, setEditingRecord] = useState(null);    // General en edición
-  const [editingSurgery, setEditingSurgery] = useState(null);  // Cirugía en edición
-  const [editingCare, setEditingCare] = useState(null);        // Cuidados en edición
+  const [editingRecord, setEditingRecord] = useState(null); // General en edición
+  const [editingSurgery, setEditingSurgery] = useState(null); // Cirugía en edición
+  const [editingCare, setEditingCare] = useState(null); // Cuidados en edición
 
   /* ====== UI & mensajes ====== */
   const [confirmationMsg, setConfirmationMsg] = useState("");
-  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, type: "", id: null });
+  const [deleteConfirm, setDeleteConfirm] = useState({
+    show: false,
+    type: "",
+    id: null,
+  });
 
   /* ====== Imágenes ====== */
-  const [imagePreview, setImagePreview] = useState([]);              // general (nuevo/edición)
+  const [imagePreview, setImagePreview] = useState([]); // general (nuevo/edición)
   const [surgeryImagePreview, setSurgeryImagePreview] = useState([]); // cirugía (nuevo/edición)
-  const [careImagePreview, setCareImagePreview] = useState([]);       // cuidados (nuevo/edición)
+  const [careImagePreview, setCareImagePreview] = useState([]); // cuidados (nuevo/edición)
   const [deleteImageModal, setDeleteImageModal] = useState(false);
   // imageToDelete = { scope: "general"|"surgery"|"care", recordId: "new"|number, img: base64 }
   const [imageToDelete, setImageToDelete] = useState(null);
@@ -145,15 +130,16 @@ const MedicalRecords = () => {
   const pdfRef = useRef();
 
   /* ====== Catálogos ====== */
-  const vets = [
-    "Dra. María González (Cardióloga)",
-    "Dr. Carlos López (Dermatólogo)",
-    "Dra. Ana Torres (Cirujana)",
-  ];
-  const vaccines = ["Rabia", "Parvovirus", "Distemper", "Leptospirosis"];
+  const vets = ["Dra. María González", "Dr. Carlos López", "Dra. Ana Torres"];
   const speciesOptions = ["Perro", "Gato", "Ave", "Conejo", "Otro"];
   const genderOptions = ["Macho", "Hembra"];
   const bloodDonorOptions = ["Sí", "No"];
+
+  /* ====== Acordeón ====== */
+  const [expandedId, setExpandedId] = useState(null);
+  const toggleExpand = (id) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
 
   /* =========================
    *         Helpers
@@ -179,6 +165,22 @@ const MedicalRecords = () => {
     return matchSelected && matchSearch;
   };
 
+  // Lista combinada y única de mascotas (los 3 expedientes)
+  const getAllPetOwnerOptions = () => {
+    const all = [...generalRecords, ...surgeryRecords, ...careRecords];
+    const seen = new Set();
+    const out = [];
+    for (const r of all) {
+      const label = petOwnerKey(r.pet, r.species, r.owner);
+      if (!label.trim()) continue;
+      if (!seen.has(label)) {
+        seen.add(label);
+        out.push(label);
+      }
+    }
+    return out;
+  };
+
   /* =========================
    *       FILTRADOS
    * ========================= */
@@ -195,7 +197,365 @@ const MedicalRecords = () => {
   );
 
   /* =========================
-   *   GENERAL: inputs y CRUD
+   *   Manejo de imágenes
+   * ========================= */
+  const handleExportImage = (e, type) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const readers = Array.from(files).map(
+      (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        })
+    );
+
+    Promise.all(readers).then((images) => {
+      if (type === "general") {
+        setImagePreview((prev) => [...prev, ...images]);
+        setNewRecord((prev) => ({ ...prev, images: [...prev.images, ...images] }));
+      } else if (type === "surgery") {
+        setSurgeryImagePreview((prev) => [...prev, ...images]);
+        setNewSurgery((prev) => ({ ...prev, images: [...prev.images, ...images] }));
+      } else if (type === "care") {
+        setCareImagePreview((prev) => [...prev, ...images]);
+        setNewCare((prev) => ({ ...prev, images: [...prev.images, ...images] }));
+      }
+      showTemporaryMessage("Imagen(es) importada(s) correctamente");
+    });
+  };
+
+  const askDeleteImage = (scope, recordId, img) => {
+    setImageToDelete({ scope, recordId, img });
+    setDeleteImageModal(true);
+  };
+
+  const confirmDeleteImage = () => {
+    if (!imageToDelete) return;
+    const { scope, recordId, img } = imageToDelete;
+
+    if (scope === "general") {
+      if (recordId === "new") {
+        setImagePreview((prev) => prev.filter((i) => i !== img));
+        setNewRecord((prev) => ({
+          ...prev,
+          images: prev.images.filter((i) => i !== img),
+        }));
+      } else {
+        setGeneralRecords((prev) =>
+          prev.map((r) =>
+            r.id === recordId ? { ...r, images: r.images.filter((i) => i !== img) } : r
+          )
+        );
+      }
+    } else if (scope === "surgery") {
+      if (recordId === "new") {
+        setSurgeryImagePreview((prev) => prev.filter((i) => i !== img));
+        setNewSurgery((prev) => ({
+          ...prev,
+          images: prev.images.filter((i) => i !== img),
+        }));
+      } else {
+        setSurgeryRecords((prev) =>
+          prev.map((s) =>
+            s.id === recordId ? { ...s, images: s.images.filter((i) => i !== img) } : s
+          )
+        );
+      }
+    } else if (scope === "care") {
+      if (recordId === "new") {
+        setCareImagePreview((prev) => prev.filter((i) => i !== img));
+        setNewCare((prev) => ({
+          ...prev,
+          images: prev.images.filter((i) => i !== img),
+        }));
+      } else {
+        setCareRecords((prev) =>
+          prev.map((c) =>
+            c.id === recordId ? { ...c, images: c.images.filter((i) => i !== img) } : c
+          )
+        );
+      }
+    }
+
+    setDeleteImageModal(false);
+    setImageToDelete(null);
+    showTemporaryMessage("Imagen eliminada correctamente");
+  };
+
+  /* =========================
+   *   Exportación PDF (unificada)
+   * ========================= */
+  const handleExportPDF = (record, type) => {
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 15;
+    let y = margin;
+
+    // Color barra según tipo/origen
+    let color = [0, 168, 132]; // general
+    if (type === "surgery") color = record.fromGeneral ? [212, 68, 68] : [255, 165, 0];
+    if (type === "care") color = record.fromGeneral ? [0, 123, 255] : [255, 165, 0];
+
+    // Encabezado
+    pdf.setFillColor(...color);
+    pdf.rect(0, 0, pageW, 18, "F");
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(14);
+    pdf.text(
+      type === "general"
+        ? "Expediente General"
+        : type === "surgery"
+        ? "Expediente Cirugía"
+        : "Cuidados en Casa",
+      margin,
+      12
+    );
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(10);
+    pdf.text(`Generado: ${new Date().toLocaleString()}`, pageW - margin, 12, {
+      align: "right",
+    });
+
+    y = 26;
+    pdf.setTextColor(0, 0, 0);
+
+    // Helpers de texto
+    const maybePageBreak = (next = 6.5) => {
+      if (y + next > pageH - margin) {
+        pdf.addPage();
+        y = margin;
+      }
+    };
+
+    const row = (label, value) => {
+      maybePageBreak();
+      pdf.setFont("helvetica", "bold");
+      pdf.text(`${label}:`, margin, y);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(String(value || "—"), margin + 50, y);
+      y += 6.5;
+    };
+
+    const block = (title, text) => {
+      const h = 5;
+      maybePageBreak(h + 4);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(...color);
+      pdf.text(title, margin, y);
+      pdf.setTextColor(0, 0, 0);
+      y += h;
+      const lines = pdf.splitTextToSize(text || "—", pageW - margin * 2);
+      lines.forEach((ln) => {
+        maybePageBreak();
+        pdf.setFont("helvetica", "normal");
+        pdf.text(ln, margin, y);
+        y += 6;
+      });
+      y += 2;
+    };
+
+    // Contenido según tipo
+    if (type === "general") {
+      const leftStartY = y;
+      // columna izquierda
+      ["Paciente", "Especie", "Raza", "Sexo", "Peso", "Color"].forEach((label, i) => {
+        const val =
+          label === "Paciente"
+            ? record.pet
+            : label === "Especie"
+            ? record.species === "Otro"
+              ? record.otherSpecies
+              : record.species
+            : label === "Raza"
+            ? record.breed
+            : label === "Sexo"
+            ? record.gender
+            : label === "Peso"
+            ? record.weight
+            : record.color;
+        row(label, val);
+      });
+
+      // columna derecha
+      let yRight = leftStartY;
+      const rightX = pageW / 2 + 5;
+      const rowRight = (label, value) => {
+        if (yRight + 6.5 > pageH - margin) {
+          pdf.addPage();
+          yRight = margin;
+        }
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`${label}:`, rightX, yRight);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(String(value || "—"), rightX + 50, yRight);
+        yRight += 6.5;
+      };
+      [
+        ["Dueño", record.owner],
+        ["Teléfono", record.ownerPhone],
+        ["Sucursal", record.branch],
+        ["Doctor", record.vet],
+        ["Fecha", record.date],
+        ["Donante Sangre", record.bloodDonor],
+      ].forEach(([l, v]) => rowRight(l, v));
+
+      y = Math.max(y, yRight) + 4;
+
+      block("Exámenes", record.exams);
+      block("Cirugía", record.surgery);
+      block("CC a aplicar", record.ccToApply);
+      block("Diagnóstico", record.diagnosis);
+      block("Tratamiento", record.treatment);
+      block("Notas", record.notes);
+
+      // Vacunas
+      maybePageBreak(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(...color);
+      pdf.text("Vacunas administradas", margin, y);
+      pdf.setTextColor(0, 0, 0);
+      y += 6;
+      if (record.vaccinesAdministered?.length) {
+        record.vaccinesAdministered.forEach((v) => {
+          const lines = pdf.splitTextToSize(`• ${v}`, pageW - margin * 2);
+          lines.forEach((ln) => {
+            maybePageBreak();
+            pdf.setFont("helvetica", "normal");
+            pdf.text(ln, margin, y);
+            y += 6;
+          });
+        });
+      } else {
+        maybePageBreak();
+        pdf.text("—", margin, y);
+        y += 6;
+      }
+
+      // Fechas
+      y += 2;
+      maybePageBreak(10);
+      pdf.setDrawColor(230);
+      pdf.line(margin, y, pageW - margin, y);
+      y += 6;
+      pdf.setFont("helvetica", "italic");
+      pdf.text(
+        `Creado: ${record.createdAt ? new Date(record.createdAt).toLocaleString() : "—"}   •   Modificado: ${
+          record.modifiedAt ? new Date(record.modifiedAt).toLocaleString() : "No modificado"
+        }`,
+        margin,
+        y
+      );
+      y += 8;
+    }
+
+    if (type === "surgery") {
+      row("Sucursal", record.branch);
+      row("Fecha", record.date);
+      row("Hora", record.time);
+      row("Propietario", record.owner);
+      row("Teléfono", record.ownerPhone);
+      row("ID/Pasaporte", record.ownerId);
+      row("Mascota", record.pet);
+      row("Especie", record.species === "Otro" ? record.otherSpecies : record.species);
+      row("Raza", record.breed);
+      row("Sexo", record.gender);
+      row("Edad", record.age);
+      block("Descripción del caso", record.caseDescription);
+
+      const hasRisks = record.risks?.some((r) => r && r.trim());
+      if (hasRisks) {
+        maybePageBreak(12);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(...color);
+        pdf.text("Riesgos", margin, y);
+        pdf.setTextColor(0, 0, 0);
+        y += 6;
+        record.risks.forEach((risk, idx) => {
+          if (!risk) return;
+          const lines = pdf.splitTextToSize(`• ${risk}`, pageW - margin * 2);
+          lines.forEach((ln) => {
+            maybePageBreak();
+            pdf.setFont("helvetica", "normal");
+            pdf.text(ln, margin, y);
+            y += 6;
+          });
+        });
+        y += 2;
+      }
+    }
+
+    if (type === "care") {
+      row("Propietario", record.owner);
+      row("Teléfono", record.ownerPhone);
+      row("Mascota", record.pet);
+      row("Especie", record.species);
+      row("Sucursal", record.branch);
+      block("Instrucciones", record.instructions);
+      row("Medicaciones (fecha)", record.meds);
+      row("Comida y Agua (fecha)", record.foodWater);
+      row("Ejercicio", record.exercise);
+      row("Suturas", record.sutures);
+      block("Instrucciones de seguimiento", record.followUp);
+      row("Monitoreo en casa", record.monitoring);
+      row("Contacto de emergencia", record.emergencyContact);
+    }
+
+    // Imágenes (grilla 2xN)
+    if (record.images?.length) {
+      if (y + 12 > pageH - margin) {
+        pdf.addPage();
+        y = margin;
+      }
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(...color);
+      pdf.text("Imágenes asociadas", margin, y);
+      pdf.setTextColor(0, 0, 0);
+      y += 8;
+
+      const cols = 2;
+      const gutter = 8;
+      const imgW = (pageW - margin * 2 - gutter) / cols;
+      const imgH = imgW * 0.75;
+
+      record.images.forEach((src, i) => {
+        const col = i % cols;
+        const rowIdx = Math.floor(i / cols);
+        const x = margin + col * (imgW + gutter);
+        const yCell = y + rowIdx * (imgH + gutter);
+
+        if (yCell + imgH > pageH - margin) {
+          pdf.addPage();
+          y = margin;
+        }
+        try {
+          // Usamos JPEG por compatibilidad (también soporta data:image/png)
+          pdf.addImage(src, "JPEG", x, y + Math.floor(i / cols) * (imgH + gutter), imgW, imgH);
+        } catch (err) {
+          // Ignoramos errores de imágenes corruptas
+        }
+      });
+    }
+
+    // Pie (solo una línea de crédito)
+    pdf.setFontSize(9);
+    pdf.setTextColor(130, 130, 130);
+    pdf.text(
+      "PetPlaza Hospivet • Documento generado automáticamente",
+      pageW / 2,
+      pageH - 8,
+      { align: "center" }
+    );
+
+    pdf.save(`${type}-${record.pet || "expediente"}.pdf`);
+  };
+
+  /* =========================
+   *   General: inputs y CRUD
    * ========================= */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -282,135 +642,8 @@ const MedicalRecords = () => {
     setDeleteConfirm({ show: false, type: "", id: null });
 
   /* =========================
-   *   Imágenes (import/eliminar)
-   * ========================= */
-  const handleExportImage = (e, type) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const readers = Array.from(files).map(
-      (file) =>
-        new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(file);
-        })
-    );
-
-    Promise.all(readers).then((images) => {
-      if (type === "general") {
-        setImagePreview((prev) => [...prev, ...images]);
-        setNewRecord((prev) => ({ ...prev, images: [...prev.images, ...images] }));
-      } else if (type === "surgery") {
-        setSurgeryImagePreview((prev) => [...prev, ...images]);
-        setNewSurgery((prev) => ({ ...prev, images: [...prev.images, ...images] }));
-      } else if (type === "care") {
-        setCareImagePreview((prev) => [...prev, ...images]);
-        setNewCare((prev) => ({ ...prev, images: [...prev.images, ...images] }));
-      }
-      showTemporaryMessage("Imagen(es) importada(s) correctamente");
-    });
-  };
-
-  const askDeleteImage = (scope, recordId, img) => {
-    setImageToDelete({ scope, recordId, img });
-    setDeleteImageModal(true);
-  };
-
-  const confirmDeleteImage = () => {
-    if (!imageToDelete) return;
-    const { scope, recordId, img } = imageToDelete;
-
-    if (scope === "general") {
-      if (recordId === "new") {
-        setImagePreview((prev) => prev.filter((i) => i !== img));
-        setNewRecord((prev) => ({
-          ...prev,
-          images: prev.images.filter((i) => i !== img),
-        }));
-      } else {
-        setGeneralRecords((prev) =>
-          prev.map((r) =>
-            r.id === recordId
-              ? { ...r, images: r.images.filter((i) => i !== img) }
-              : r
-          )
-        );
-      }
-    } else if (scope === "surgery") {
-      if (recordId === "new") {
-        setSurgeryImagePreview((prev) => prev.filter((i) => i !== img));
-        setNewSurgery((prev) => ({
-          ...prev,
-          images: prev.images.filter((i) => i !== img),
-        }));
-      } else {
-        setSurgeryRecords((prev) =>
-          prev.map((s) =>
-            s.id === recordId
-              ? { ...s, images: s.images.filter((i) => i !== img) }
-              : s
-          )
-        );
-      }
-    } else if (scope === "care") {
-      if (recordId === "new") {
-        setCareImagePreview((prev) => prev.filter((i) => i !== img));
-        setNewCare((prev) => ({
-          ...prev,
-          images: prev.images.filter((i) => i !== img),
-        }));
-      } else {
-        setCareRecords((prev) =>
-          prev.map((c) =>
-            c.id === recordId
-              ? { ...c, images: c.images.filter((i) => i !== img) }
-              : c
-          )
-        );
-      }
-    }
-
-    setDeleteImageModal(false);
-    setImageToDelete(null);
-    showTemporaryMessage("Imagen eliminada correctamente");
-  };
-
-  /* =========================
-   *   Exportar PDF (por tipo)
-   * ========================= */
-  const handleExportPDF = async (record, type) => {
-    const input = document.getElementById(`${type}-${record.id}`);
-    if (!input) return;
-    input.classList.add("pdf-hidden");
-
-    const canvas = await html2canvas(input);
-    const imgData = canvas.toDataURL("image/png");
-
-    const pdf = new jsPDF("p", "mm", "a4");
-    const imgWidth = 190;
-    const pageHeight = pdf.internal.pageSize.height;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    let heightLeft = imgHeight;
-    let position = 10;
-
-    pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
-
-    input.classList.remove("pdf-hidden");
-    pdf.save(`${type}-${record.pet || "expediente"}.pdf`);
-  };
-
-  /* =========================
    *   Cirugía (inputs y CRUD)
+   *   + Autollenado SOLO si se parte del General
    * ========================= */
   const handleSurgeryInputChange = (e, index = null) => {
     const { name, value } = e.target;
@@ -424,25 +657,33 @@ const MedicalRecords = () => {
     }
   };
 
+  // Abrir cirugía desde menú "Nuevo expediente" (NO autollenar, color naranja)
   const openSurgeryModal = () => {
+    setNewSurgery({ ...initialSurgeryRecord(), fromGeneral: false });
+    setEditingSurgery(null);
+    setSurgeryImagePreview([]);
+    setShowSurgeryModal(true);
+  };
+
+  // Abrir cirugía desde un General (autollenado, color normal rojo)
+  const openSurgeryFromGeneral = () => {
+    const ctx = editingRecord || newRecord; // permite autollenar incluso sin guardar
     const base = initialSurgeryRecord();
-    if (editingRecord) {
-      setNewSurgery({
-        ...base,
-        generalId: editingRecord.id,
-        branch: editingRecord.branch || "",
-        date: editingRecord.date || "",
-        owner: editingRecord.owner || "",
-        pet: editingRecord.pet || "",
-        species: editingRecord.species || "",
-        otherSpecies: editingRecord.otherSpecies || "",
-        breed: editingRecord.breed || "",
-        gender: editingRecord.gender || "",
-        age: editingRecord.age || "",
-      });
-    } else {
-      setNewSurgery(base);
-    }
+    setNewSurgery({
+      ...base,
+      generalId: editingRecord ? editingRecord.id : null,
+      branch: ctx.branch || "",
+      date: ctx.date || "",
+      owner: ctx.owner || "",
+      ownerPhone: ctx.ownerPhone || "",
+      pet: ctx.pet || "",
+      species: ctx.species || "",
+      otherSpecies: ctx.otherSpecies || "",
+      breed: ctx.breed || "",
+      gender: ctx.gender || "",
+      age: ctx.age || "",
+      fromGeneral: true,
+    });
     setEditingSurgery(null);
     setSurgeryImagePreview([]);
     setShowSurgeryModal(true);
@@ -489,29 +730,38 @@ const MedicalRecords = () => {
 
   /* =========================
    *   Cuidados en casa (inputs y CRUD)
+   *   + Autollenado SOLO si se parte del General
    * ========================= */
+  const handleCareInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewCare((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Abrir cuidados desde menú "Nuevo expediente" (NO autollenar, color naranja)
   const openCareModal = () => {
-    const base = initialCareRecord();
-    if (editingRecord) {
-      setNewCare({
-        ...base,
-        generalId: editingRecord.id,
-        owner: editingRecord.owner || "",
-        pet: editingRecord.pet || "",
-        species: editingRecord.species || "",
-        branch: editingRecord.branch || "",
-      });
-    } else {
-      setNewCare(base);
-    }
+    setNewCare({ ...initialCareRecord(), fromGeneral: false });
     setEditingCare(null);
     setCareImagePreview([]);
     setShowCareModal(true);
   };
 
-  const handleCareInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewCare((prev) => ({ ...prev, [name]: value }));
+  // Abrir cuidados desde un General (autollenado, color normal azul)
+  const openCareFromGeneral = () => {
+    const ctx = editingRecord || newRecord;
+    const base = initialCareRecord();
+    setNewCare({
+      ...base,
+      generalId: editingRecord ? editingRecord.id : null,
+      owner: ctx.owner || "",
+      ownerPhone: ctx.ownerPhone || "",
+      pet: ctx.pet || "",
+      species: ctx.species || "",
+      branch: ctx.branch || "",
+      fromGeneral: true,
+    });
+    setEditingCare(null);
+    setCareImagePreview([]);
+    setShowCareModal(true);
   };
 
   const handleAddOrUpdateCare = () => {
@@ -554,6 +804,31 @@ const MedicalRecords = () => {
   };
 
   /* =========================
+   *   LIMPIADORES de formularios (brocha)
+   * ========================= */
+  const clearGeneralForm = () => {
+    setNewRecord(initialGeneralRecord());
+    setImagePreview([]);
+    setEditingRecord(null);
+  };
+
+  const clearSurgeryForm = () => {
+    // mantener flags de origen
+    const { fromGeneral, generalId } = newSurgery;
+    setNewSurgery({ ...initialSurgeryRecord(), fromGeneral, generalId });
+    setSurgeryImagePreview([]);
+    setEditingSurgery(null);
+  };
+
+  const clearCareForm = () => {
+    // mantener flags de origen
+    const { fromGeneral, generalId } = newCare;
+    setNewCare({ ...initialCareRecord(), fromGeneral, generalId });
+    setCareImagePreview([]);
+    setEditingCare(null);
+  };
+
+  /* =========================
    *         Render
    * ========================= */
   return (
@@ -563,7 +838,10 @@ const MedicalRecords = () => {
 
       {/* Imagen fullscreen */}
       {fullScreenImage && (
-        <div className="image-modal-overlay active" onClick={() => setFullScreenImage(null)}>
+        <div
+          className="image-modal-overlay active"
+          onClick={() => setFullScreenImage(null)}
+        >
           <img src={fullScreenImage} className="image-modal" alt="Full Preview" />
         </div>
       )}
@@ -572,7 +850,14 @@ const MedicalRecords = () => {
       <div className="medical-header">
         <h1>Expedientes</h1>
 
-        <div style={{ display: "flex", gap: "10px", alignItems: "center", position: "relative" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            alignItems: "center",
+            position: "relative",
+          }}
+        >
           <select
             value={recordTypeFilter}
             onChange={(e) => setRecordTypeFilter(e.target.value)}
@@ -587,10 +872,7 @@ const MedicalRecords = () => {
 
           {/* Botón NUEVO EXPEDIENTE con menú desplegable */}
           <div style={{ position: "relative" }}>
-            <button
-              className="btn-primary"
-              onClick={() => setShowDropdown((v) => !v)}
-            >
+            <button className="btn-primary" onClick={() => setShowDropdown((v) => !v)}>
               <Plus size={16} /> Nuevo Expediente
             </button>
 
@@ -608,22 +890,16 @@ const MedicalRecords = () => {
               </button>
               <button
                 onClick={() => {
-                  setNewSurgery(initialSurgeryRecord());
-                  setEditingSurgery(null);
-                  setSurgeryImagePreview([]);
-                  setShowSurgeryModal(true);
                   setShowDropdown(false);
+                  openSurgeryModal(); // SIN autollenado, marcará naranja (fromGeneral=false)
                 }}
               >
                 Quirúrgico
               </button>
               <button
                 onClick={() => {
-                  setNewCare(initialCareRecord());
-                  setEditingCare(null);
-                  setCareImagePreview([]);
-                  setShowCareModal(true);
                   setShowDropdown(false);
+                  openCareModal(); // SIN autollenado, marcará naranja (fromGeneral=false)
                 }}
               >
                 Cuidados en Casa
@@ -637,9 +913,9 @@ const MedicalRecords = () => {
       <div className="medical-filters">
         <select value={selectedPet} onChange={(e) => setSelectedPet(e.target.value)}>
           <option value="">Seleccionar mascota</option>
-          {generalRecords.map((r) => (
-            <option key={r.id} value={petOwnerKey(r.pet, r.species, r.owner)}>
-              {petOwnerKey(r.pet, r.species, r.owner)}
+          {getAllPetOwnerOptions().map((label, idx) => (
+            <option key={idx} value={label}>
+              {label}
             </option>
           ))}
         </select>
@@ -659,238 +935,455 @@ const MedicalRecords = () => {
       <div className="records-cards">
         {/* ====== GENERALES ====== */}
         {(recordTypeFilter === "Todos" || recordTypeFilter === "Expediente general") &&
-          filteredGeneral.map((r) => (
-            <div className="record-card" key={r.id} id={`general-${r.id}`}>
-              <div className="record-header">
-                <h3>Expediente General</h3>
-                <span>
-                  Creado: {r.createdAt ? new Date(r.createdAt).toLocaleString() : "—"} <br />
-                  Modificado: {r.modifiedAt ? new Date(r.modifiedAt).toLocaleString() : "No modificado"} <br />
-                  Doctor: {r.vet || "N/A"}
-                </span>
-                <div className="card-buttons">
-                  <button className="btn-edit" onClick={() => handleEditRecord(r)}>
-                    <Edit size={16} /> Editar
-                  </button>
-                  <button className="btn-delete" onClick={() => requestDeleteRecord("general", r.id)}>
-                    <Trash2 size={16} /> Borrar
-                  </button>
-                  <button className="btn-export-pdf" onClick={() => handleExportPDF(r, "general")}>
-                    <FileDown size={16} /> Exportar PDF
-                  </button>
+          filteredGeneral.map((r) => {
+            const isOpen = expandedId === r.id;
+            return (
+              <div
+                className={`record-card ${isOpen ? "expanded" : "collapsed"} general-card`}
+                key={r.id}
+                id={`general-${r.id}`}
+                onClick={() => toggleExpand(r.id)}
+              >
+                <div className="record-header">
+                  <h3>Expediente General</h3>
+                  <span>
+                    {isOpen ? (
+                      <>
+                        Creado: {r.createdAt ? new Date(r.createdAt).toLocaleString() : "—"} <br />
+                        Modificado:{" "}
+                        {r.modifiedAt
+                          ? new Date(r.modifiedAt).toLocaleString()
+                          : "No modificado"}{" "}
+                        <br />
+                        Doctor: {r.vet || "N/A"}
+                      </>
+                    ) : (
+                      <>
+                        {r.pet || "Mascota"} ({r.species || "—"}) • {r.owner || "Propietario"}{" "}
+                        <br />
+                        Doctor: {r.vet || "N/A"} • Fecha: {r.date || "—"}
+                      </>
+                    )}
+                  </span>
+                  <div className="card-buttons">
+                    <button
+                      className="btn-edit"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditRecord(r);
+                      }}
+                    >
+                      <Edit size={16} /> Editar
+                    </button>
+                    <button
+                      className="btn-delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        requestDeleteRecord("general", r.id);
+                      }}
+                    >
+                      <Trash2 size={16} /> Borrar
+                    </button>
+                    <button
+                      className="btn-export-pdf"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleExportPDF(r, "general");
+                      }}
+                    >
+                      <FileDown size={16} /> Exportar PDF
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="record-body">
-                <div className="record-section"><h4>Sucursal</h4><p>{r.branch || "N/A"}</p></div>
-                <div className="record-section"><h4>Exámenes a realizar</h4><p>{r.exams || "N/A"}</p></div>
-                <div className="record-section"><h4>Teléfono Propietario</h4><p>{r.ownerPhone || "N/A"}</p></div>
-                <div className="record-section"><h4>Cirugía a realizar</h4><p>{r.surgery || "N/A"}</p></div>
-                <div className="record-section"><h4>Diagnóstico</h4><p>{r.diagnosis || "N/A"}</p></div>
-                <div className="record-section"><h4>Tratamiento</h4><p>{r.treatment || "N/A"}</p></div>
-                <div className="record-section"><h4>Notas adicionales</h4><p>{r.notes || "N/A"}</p></div>
-
-                <div className="record-section">
-                  <h4>Vacunas administradas</h4>
-                  {r.modifiedAt && (
-                    <p className="modified-msg">Este expediente ha sido modificado con anterioridad.</p>
-                  )}
-                  {r.vaccinesAdministered?.length ? (
-                    <ul>
-                      {r.vaccinesAdministered.map((v, idx) => (
-                        <li key={idx}>{v}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>N/A</p>
-                  )}
-                </div>
-
-                {r.images?.length > 0 && (
-                  <div className="record-section">
-                    <h4>Imágenes asociadas</h4>
-                    <div className="image-gallery">
-                      {r.images.map((img, idx) => (
-                        <div key={idx} className="image-container">
-                          <img
-                            src={img}
-                            alt="Expediente"
-                            className="record-image"
-                            onClick={() => setFullScreenImage(img)}
-                          />
-                          <button
-                            className="delete-image-btn"
-                            title="Eliminar imagen"
-                            onClick={() => askDeleteImage("general", r.id, img)}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
+                {isOpen && (
+                  <div className="record-body">
+                    <div className="record-section">
+                      <h4>Sucursal</h4>
+                      <p>{r.branch || "N/A"}</p>
                     </div>
+                    <div className="record-section">
+                      <h4>Exámenes a realizar</h4>
+                      <p>{r.exams || "N/A"}</p>
+                    </div>
+                    <div className="record-section">
+                      <h4>Teléfono Propietario</h4>
+                      <p>{r.ownerPhone || "N/A"}</p>
+                    </div>
+                    <div className="record-section">
+                      <h4>Cirugía a realizar</h4>
+                      <p>{r.surgery || "N/A"}</p>
+                    </div>
+                    <div className="record-section">
+                      <h4>Diagnóstico</h4>
+                      <p>{r.diagnosis || "N/A"}</p>
+                    </div>
+                    <div className="record-section">
+                      <h4>Tratamiento</h4>
+                      <p>{r.treatment || "N/A"}</p>
+                    </div>
+                    <div className="record-section">
+                      <h4>Notas adicionales</h4>
+                      <p>{r.notes || "N/A"}</p>
+                    </div>
+
+                    <div className="record-section">
+                      <h4>Vacunas administradas</h4>
+                      {r.modifiedAt && (
+                        <p className="modified-msg">
+                          Este expediente ha sido modificado con anterioridad.
+                        </p>
+                      )}
+                      {r.vaccinesAdministered?.length ? (
+                        <ul>
+                          {r.vaccinesAdministered.map((v, idx) => (
+                            <li key={idx}>{v}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>N/A</p>
+                      )}
+                    </div>
+
+                    {r.images?.length > 0 && (
+                      <div className="record-section">
+                        <h4>Imágenes asociadas</h4>
+                        <div className="image-gallery">
+                          {r.images.map((img, idx) => (
+                            <div key={idx} className="image-container">
+                              <img
+                                src={img}
+                                alt="Expediente"
+                                className="record-image"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setFullScreenImage(img);
+                                }}
+                              />
+                              <button
+                                className="delete-image-btn"
+                                title="Eliminar imagen"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  askDeleteImage("general", r.id, img);
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
         {/* ====== CIRUGÍAS ====== */}
         {(recordTypeFilter === "Todos" || recordTypeFilter === "Expediente cirugía") &&
-          filteredSurgery.map((s) => (
-            <div className="surgery-card" key={s.id} id={`surgery-${s.id}`}>
-              <div className="record-header">
-                <h3>Expediente Cirugía</h3>
-                <span>
-                  Creado: {s.createdAt ? new Date(s.createdAt).toLocaleString() : "—"} <br />
-                  Sucursal: {s.branch || "N/A"}
-                </span>
-                <div className="card-buttons">
-                  <button className="btn-edit" onClick={() => handleEditSurgery(s)}>
-                    <Edit size={16} /> Editar
-                  </button>
-                  <button className="btn-delete" onClick={() => requestDeleteRecord("surgery", s.id)}>
-                    <Trash2 size={16} /> Borrar
-                  </button>
-                  <button className="btn-export-pdf" onClick={() => handleExportPDF(s, "surgery")}>
-                    <FileDown size={16} /> Exportar PDF
-                  </button>
+          filteredSurgery.map((s) => {
+            const isOpen = expandedId === s.id;
+            return (
+              <div
+                className={`surgery-card ${!s.fromGeneral ? "orange" : ""} ${
+                  isOpen ? "expanded" : "collapsed"
+                }`}
+                key={s.id}
+                id={`surgery-${s.id}`}
+                onClick={() => toggleExpand(s.id)}
+              >
+                <div className="record-header">
+                  <h3>Expediente Cirugía</h3>
+                  <span>
+                    {isOpen ? (
+                      <>
+                        Creado: {s.createdAt ? new Date(s.createdAt).toLocaleString() : "—"}{" "}
+                        <br />
+                        Sucursal: {s.branch || "N/A"}
+                      </>
+                    ) : (
+                      <>
+                        {s.pet || "Mascota"} ({s.species || "—"}) • {s.owner || "Propietario"}{" "}
+                        <br />
+                        Fecha: {s.date || "—"} • Hora: {s.time || "—"}
+                      </>
+                    )}
+                  </span>
+                  <div className="card-buttons">
+                    <button
+                      className="btn-edit"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditSurgery(s);
+                      }}
+                    >
+                      <Edit size={16} /> Editar
+                    </button>
+                    <button
+                      className="btn-delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        requestDeleteRecord("surgery", s.id);
+                      }}
+                    >
+                      <Trash2 size={16} /> Borrar
+                    </button>
+                    <button
+                      className="btn-export-pdf"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleExportPDF(s, "surgery");
+                      }}
+                    >
+                      <FileDown size={16} /> Exportar PDF
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="record-body">
-                <p><strong>Fecha:</strong> {s.date || "N/A"}</p>
-                <p><strong>Hora:</strong> {s.time || "N/A"}</p>
-                <p><strong>Propietario:</strong> {s.owner || "N/A"}</p>
-                <p><strong>ID/Pasaporte:</strong> {s.ownerId || "N/A"}</p>
-                <p><strong>Mascota:</strong> {s.pet || "N/A"}</p>
-                <p><strong>Especie:</strong> {s.species === "Otro" ? (s.otherSpecies || "Otro") : (s.species || "N/A")}</p>
-                <p><strong>Raza:</strong> {s.breed || "N/A"}</p>
-                <p><strong>Sexo:</strong> {s.gender || "N/A"}</p>
-                <p><strong>Edad:</strong> {s.age || "N/A"}</p>
-                <p><strong>Descripción del caso:</strong> {s.caseDescription || "N/A"}</p>
+                {isOpen && (
+                  <div className="record-body">
+                    <p>
+                      <strong>Fecha:</strong> {s.date || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Hora:</strong> {s.time || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Propietario:</strong> {s.owner || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Teléfono:</strong> {s.ownerPhone || "N/A"}
+                    </p>
+                    <p>
+                      <strong>ID/Pasaporte:</strong> {s.ownerId || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Mascota:</strong> {s.pet || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Especie:</strong>{" "}
+                      {s.species === "Otro" ? s.otherSpecies || "Otro" : s.species || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Raza:</strong> {s.breed || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Sexo:</strong> {s.gender || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Edad:</strong> {s.age || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Descripción del caso:</strong> {s.caseDescription || "N/A"}
+                    </p>
 
-                {s.risks?.some((x) => x && x.trim()) ? (
-                  <>
-                    <p><strong>Riesgos:</strong></p>
-                    <ul>{s.risks.map((rr, i) => (rr ? <li key={i}>{rr}</li> : null))}</ul>
-                  </>
-                ) : (
-                  <p><strong>Riesgos:</strong> N/A</p>
-                )}
+                    {s.risks?.some((x) => x && x.trim()) ? (
+                      <>
+                        <p>
+                          <strong>Riesgos:</strong>
+                        </p>
+                        <ul>{s.risks.map((rr, i) => (rr ? <li key={i}>{rr}</li> : null))}</ul>
+                      </>
+                    ) : (
+                      <p>
+                        <strong>Riesgos:</strong> N/A
+                      </p>
+                    )}
 
-                {s.images?.length > 0 && (
-                  <div className="record-section">
-                    <h4>Imágenes</h4>
-                    <div className="image-gallery">
-                      {s.images.map((img, idx) => (
-                        <div key={idx} className="image-container">
-                          <img
-                            src={img}
-                            alt="Cirugía"
-                            className="record-image"
-                            onClick={() => setFullScreenImage(img)}
-                          />
-                          <button
-                            className="delete-image-btn"
-                            title="Eliminar imagen"
-                            onClick={() => askDeleteImage("surgery", s.id, img)}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                    {s.images?.length > 0 && (
+                      <div className="record-section">
+                        <h4>Imágenes</h4>
+                        <div className="image-gallery">
+                          {s.images.map((img, idx) => (
+                            <div key={idx} className="image-container">
+                              <img
+                                src={img}
+                                alt="Cirugía"
+                                className="record-image"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setFullScreenImage(img);
+                                }}
+                              />
+                              <button
+                                className="delete-image-btn"
+                                title="Eliminar imagen"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  askDeleteImage("surgery", s.id, img);
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
         {/* ====== CUIDADOS EN CASA ====== */}
         {(recordTypeFilter === "Todos" || recordTypeFilter === "Cuidados de mascota") &&
-          filteredCare.map((c) => (
-            <div className="record-card" key={c.id} id={`care-${c.id}`}>
-              <div className="record-header">
-                <h3>Cuidados en Casa</h3>
-                <span>
-                  Creado: {c.createdAt ? new Date(c.createdAt).toLocaleString() : "—"} <br />
-                  Sucursal: {c.branch || "N/A"}
-                </span>
+          filteredCare.map((c) => {
+            const isOpen = expandedId === c.id;
+            return (
+              <div
+                className={`record-card ${isOpen ? "expanded" : "collapsed"} care-card ${
+                  !c.fromGeneral ? "orange" : ""
+                }`}
+                key={c.id}
+                id={`care-${c.id}`}
+                onClick={() => toggleExpand(c.id)}
+              >
+                <div className="record-header">
+                  <h3>Cuidados en Casa</h3>
+                  <span>
+                    {isOpen ? (
+                      <>
+                        Creado: {c.createdAt ? new Date(c.createdAt).toLocaleString() : "—"}{" "}
+                        <br />
+                        Sucursal: {c.branch || "N/A"}
+                      </>
+                    ) : (
+                      <>
+                        {c.pet || "Mascota"} ({c.species || "—"}) • {c.owner || "Propietario"}
+                      </>
+                    )}
+                  </span>
+                </div>
+
                 <div className="card-buttons">
-                  <button className="btn-edit" onClick={() => handleEditCare(c)}>
+                  <button
+                    className="btn-edit"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditCare(c);
+                    }}
+                  >
                     <Edit size={16} /> Editar
                   </button>
-                  <button className="btn-delete" onClick={() => requestDeleteRecord("care", c.id)}>
+                  <button
+                    className="btn-delete"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      requestDeleteRecord("care", c.id);
+                    }}
+                  >
                     <Trash2 size={16} /> Borrar
                   </button>
-                  <button className="btn-export-pdf" onClick={() => handleExportPDF(c, "care")}>
+                  <button
+                    className="btn-export-pdf"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExportPDF(c, "care");
+                    }}
+                  >
                     <FileDown size={16} /> Exportar PDF
                   </button>
                 </div>
-              </div>
 
-              <div className="record-body">
-                <p><strong>Propietario:</strong> {c.owner || "N/A"}</p>
-                <p><strong>Mascota:</strong> {c.pet || "N/A"}</p>
-                <p><strong>Especie:</strong> {c.species || "N/A"}</p>
+                {isOpen && (
+                  <div className="record-body">
+                    <p>
+                      <strong>Propietario:</strong> {c.owner || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Teléfono:</strong> {c.ownerPhone || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Mascota:</strong> {c.pet || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Especie:</strong> {c.species || "N/A"}
+                    </p>
 
-                <div className="record-section"><h4>Instrucciones</h4><p>{c.instructions || "N/A"}</p></div>
-                <p><strong>Medicaciones (fecha):</strong> {c.meds || "N/A"}</p>
-                <p><strong>Comida y Agua (fecha):</strong> {c.foodWater || "N/A"}</p>
-                <p><strong>Ejercicio:</strong> {c.exercise || "N/A"}</p>
-                <p><strong>Suturas:</strong> {c.sutures || "N/A"}</p>
-                <div className="record-section"><h4>Instrucciones de Seguimiento</h4><p>{c.followUp || "N/A"}</p></div>
-                <p><strong>Monitoreo en Casa:</strong> {c.monitoring || "N/A"}</p>
-                <p><strong>Contacto de Emergencia:</strong> {c.emergencyContact || "N/A"}</p>
-
-                {c.images?.length > 0 && (
-                  <div className="record-section">
-                    <h4>Imágenes</h4>
-                    <div className="image-gallery">
-                      {c.images.map((img, idx) => (
-                        <div key={idx} className="image-container">
-                          <img
-                            src={img}
-                            alt="Cuidado"
-                            className="record-image"
-                            onClick={() => setFullScreenImage(img)}
-                          />
-                          <button
-                            className="delete-image-btn"
-                            title="Eliminar imagen"
-                            onClick={() => askDeleteImage("care", c.id, img)}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
+                    <div className="record-section">
+                      <h4>Instrucciones</h4>
+                      <p>{c.instructions || "N/A"}</p>
                     </div>
+                    <p>
+                      <strong>Medicaciones (fecha):</strong> {c.meds || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Comida y Agua (fecha):</strong> {c.foodWater || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Ejercicio:</strong> {c.exercise || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Suturas:</strong> {c.sutures || "N/A"}
+                    </p>
+                    <div className="record-section">
+                      <h4>Instrucciones de Seguimiento</h4>
+                      <p>{c.followUp || "N/A"}</p>
+                    </div>
+                    <p>
+                      <strong>Monitoreo en Casa:</strong> {c.monitoring || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Contacto de Emergencia:</strong> {c.emergencyContact || "N/A"}
+                    </p>
+
+                    {c.images?.length > 0 && (
+                      <div className="record-section">
+                        <h4>Imágenes</h4>
+                        <div className="image-gallery">
+                          {c.images.map((img, idx) => (
+                            <div key={idx} className="image-container">
+                              <img
+                                src={img}
+                                alt="Cuidado"
+                                className="record-image"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setFullScreenImage(img);
+                                }}
+                              />
+                              <button
+                                className="delete-image-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  askDeleteImage("care", c.id, img);
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
       </div>
 
       {/* =========================
           Modal: Expediente General
         ========================= */}
       {showModal && (
-        <div className="modal-overlay" onClick={(e)=>{ if(e.target.classList.contains('modal-overlay')) setShowModal(false); }}>
-          <div className="modal" id={`general-${newRecord.id || 'new'}`}>
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target.classList.contains("modal-overlay")) setShowModal(false);
+          }}
+        >
+          <div className="modal" id={`general-${newRecord.id || "new"}`}>
             <div className="modal-header">
-              <h2>{editingRecord ? "Editar Expediente General" : "Nuevo Expediente General"}</h2>
-              <button
-                className="modal-close"
-                onClick={() => {
-                  setShowModal(false);
-                  setEditingRecord(null);
-                  setNewRecord(initialGeneralRecord());
-                  setImagePreview([]);
-                }}
-                title="Cerrar"
-              >
-                <X size={20} />
+              <h2>
+                {editingRecord ? "Editar Expediente General" : "Nuevo Expediente General"}
+              </h2>
+              {/* BROCHA: limpia y mantiene abierto */}
+              <button className="modal-clean" onClick={clearGeneralForm} title="Limpiar formulario">
+                <Brush size={20} />
               </button>
             </div>
 
@@ -926,7 +1419,9 @@ const MedicalRecords = () => {
               <select name="species" value={newRecord.species} onChange={handleInputChange}>
                 <option value="">Seleccionar especie</option>
                 {speciesOptions.map((s, idx) => (
-                  <option key={idx} value={s}>{s}</option>
+                  <option key={idx} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
 
@@ -947,24 +1442,46 @@ const MedicalRecords = () => {
               <select name="gender" value={newRecord.gender} onChange={handleInputChange}>
                 <option value="">Seleccionar género</option>
                 {genderOptions.map((g, idx) => (
-                  <option key={idx} value={g}>{g}</option>
+                  <option key={idx} value={g}>
+                    {g}
+                  </option>
                 ))}
               </select>
 
               <label>Raza</label>
-              <input type="text" name="breed" placeholder="Raza" value={newRecord.breed} onChange={handleInputChange} />
+              <input
+                type="text"
+                name="breed"
+                placeholder="Raza"
+                value={newRecord.breed}
+                onChange={handleInputChange}
+              />
 
               <label>Peso</label>
-              <input type="text" name="weight" placeholder="Peso" value={newRecord.weight} onChange={handleInputChange} />
+              <input
+                type="text"
+                name="weight"
+                placeholder="Peso"
+                value={newRecord.weight}
+                onChange={handleInputChange}
+              />
 
               <label>Color de Mascota</label>
-              <input type="text" name="color" placeholder="Color" value={newRecord.color} onChange={handleInputChange} />
+              <input
+                type="text"
+                name="color"
+                placeholder="Color"
+                value={newRecord.color}
+                onChange={handleInputChange}
+              />
 
               <label>Donante de Sangre</label>
               <select name="bloodDonor" value={newRecord.bloodDonor} onChange={handleInputChange}>
                 <option value="">Seleccionar opción</option>
                 {bloodDonorOptions.map((b, idx) => (
-                  <option key={idx} value={b}>{b}</option>
+                  <option key={idx} value={b}>
+                    {b}
+                  </option>
                 ))}
               </select>
 
@@ -972,7 +1489,9 @@ const MedicalRecords = () => {
               <select name="vet" value={newRecord.vet} onChange={handleInputChange}>
                 <option value="">Seleccionar doctor</option>
                 {vets.map((v, idx) => (
-                  <option key={idx} value={v}>{v}</option>
+                  <option key={idx} value={v}>
+                    {v}
+                  </option>
                 ))}
               </select>
 
@@ -980,28 +1499,68 @@ const MedicalRecords = () => {
               <input type="date" name="date" value={newRecord.date} onChange={handleInputChange} />
 
               <label>Sucursal</label>
-              <input type="text" name="branch" placeholder="Sucursal" value={newRecord.branch} onChange={handleInputChange} />
+              <input
+                type="text"
+                name="branch"
+                placeholder="Sucursal"
+                value={newRecord.branch}
+                onChange={handleInputChange}
+              />
 
               <label>Exámenes a realizar</label>
-              <input type="text" name="exams" placeholder="Exámenes" value={newRecord.exams} onChange={handleInputChange} />
+              <input
+                type="text"
+                name="exams"
+                placeholder="Exámenes"
+                value={newRecord.exams}
+                onChange={handleInputChange}
+              />
 
               <label>Cirugía a realizar</label>
-              <input type="text" name="surgery" placeholder="Cirugía a realizar" value={newRecord.surgery} onChange={handleInputChange} />
+              <input
+                type="text"
+                name="surgery"
+                placeholder="Cirugía a realizar"
+                value={newRecord.surgery}
+                onChange={handleInputChange}
+              />
 
               <label>Diagnóstico</label>
-              <input type="text" name="diagnosis" placeholder="Diagnóstico" value={newRecord.diagnosis} onChange={handleInputChange} />
+              <input
+                type="text"
+                name="diagnosis"
+                placeholder="Diagnóstico"
+                value={newRecord.diagnosis}
+                onChange={handleInputChange}
+              />
 
               <label>Tratamiento</label>
-              <textarea name="treatment" placeholder="Tratamiento" value={newRecord.treatment} onChange={handleInputChange} />
+              <textarea
+                name="treatment"
+                placeholder="Tratamiento"
+                value={newRecord.treatment}
+                onChange={handleInputChange}
+              />
 
               <label>Notas adicionales</label>
-              <textarea name="notes" placeholder="Notas adicionales" value={newRecord.notes} onChange={handleInputChange} />
+              <textarea
+                name="notes"
+                placeholder="Notas adicionales"
+                value={newRecord.notes}
+                onChange={handleInputChange}
+              />
 
               <label>Vacuna (agrega con marca de tiempo)</label>
-              <select name="vaccinesField" value={newRecord.vaccinesField || ""} onChange={handleInputChange}>
+              <select
+                name="vaccinesField"
+                value={newRecord.vaccinesField || ""}
+                onChange={handleInputChange}
+              >
                 <option value="">Seleccionar vacuna</option>
-                {vaccines.map((v, idx) => (
-                  <option key={idx} value={v}>{v}</option>
+                {["Rabia", "Parvovirus", "Distemper", "Leptospirosis"].map((v, idx) => (
+                  <option key={idx} value={v}>
+                    {v}
+                  </option>
                 ))}
               </select>
 
@@ -1014,7 +1573,13 @@ const MedicalRecords = () => {
               )}
 
               <label>CC a aplicar</label>
-              <input type="text" name="ccToApply" placeholder="CC a aplicar" value={newRecord.ccToApply} onChange={handleInputChange} />
+              <input
+                type="text"
+                name="ccToApply"
+                placeholder="CC a aplicar"
+                value={newRecord.ccToApply}
+                onChange={handleInputChange}
+              />
 
               <div className="modal-buttons unified-buttons">
                 <button
@@ -1042,11 +1607,12 @@ const MedicalRecords = () => {
                   />
                 </label>
 
-                <button className="btn-surgery" onClick={openSurgeryModal}>
+                {/* Abrir modales derivados DESDE GENERAL (autollenado permitido) */}
+                <button className="btn-surgery" onClick={openSurgeryFromGeneral}>
                   Expediente Cirugía
                 </button>
 
-                <button className="btn-surgery" onClick={openCareModal}>
+                <button className="btn-surgery" onClick={openCareFromGeneral}>
                   Cuidados En Casa
                 </button>
               </div>
@@ -1081,48 +1647,89 @@ const MedicalRecords = () => {
           Modal: Expediente Cirugía
         ========================= */}
       {showSurgeryModal && (
-        <div className="modal-overlay" onClick={(e)=>{ if(e.target.classList.contains('modal-overlay')) setShowSurgeryModal(false); }}>
-          <div className="modal" id={`surgery-${newSurgery.id || 'new'}`}>
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target.classList.contains("modal-overlay")) setShowSurgeryModal(false);
+          }}
+        >
+          <div className="modal" id={`surgery-${newSurgery.id || "new"}`}>
             <div className="modal-header">
               <h2>{editingSurgery ? "Editar Expediente Quirúrgico" : "Expediente Quirúrgico"}</h2>
-              <button
-                className="modal-close"
-                onClick={() => {
-                  setShowSurgeryModal(false);
-                  setEditingSurgery(null);
-                  setNewSurgery(initialSurgeryRecord());
-                  setSurgeryImagePreview([]);
-                }}
-                title="Cerrar"
-              >
-                <X size={20} />
+              {/* BROCHA: limpia y mantiene abierto */}
+              <button className="modal-clean" onClick={clearSurgeryForm} title="Limpiar formulario">
+                <Brush size={20} />
               </button>
             </div>
 
             <div className="modal-body">
               <label>Sucursal</label>
-              <input type="text" name="branch" value={newSurgery.branch} onChange={handleSurgeryInputChange} />
+              <input
+                type="text"
+                name="branch"
+                value={newSurgery.branch}
+                onChange={handleSurgeryInputChange}
+              />
 
               <label>Fecha</label>
-              <input type="date" name="date" value={newSurgery.date} onChange={handleSurgeryInputChange} />
+              <input
+                type="date"
+                name="date"
+                value={newSurgery.date}
+                onChange={handleSurgeryInputChange}
+              />
 
               <label>Hora</label>
-              <input type="text" name="time" value={newSurgery.time} onChange={handleSurgeryInputChange} />
+              <input
+                type="text"
+                name="time"
+                value={newSurgery.time}
+                onChange={handleSurgeryInputChange}
+              />
 
               <label>Nombre del propietario</label>
-              <input type="text" name="owner" value={newSurgery.owner} onChange={handleSurgeryInputChange} />
+              <input
+                type="text"
+                name="owner"
+                value={newSurgery.owner}
+                onChange={handleSurgeryInputChange}
+              />
+
+              <label>Teléfono del propietario</label>
+              <input
+                type="text"
+                name="ownerPhone"
+                value={newSurgery.ownerPhone}
+                onChange={handleSurgeryInputChange}
+              />
 
               <label>Número de Identidad o Pasaporte</label>
-              <input type="text" name="ownerId" value={newSurgery.ownerId} onChange={handleSurgeryInputChange} />
+              <input
+                type="text"
+                name="ownerId"
+                value={newSurgery.ownerId}
+                onChange={handleSurgeryInputChange}
+              />
 
               <label>Nombre de la mascota</label>
-              <input type="text" name="pet" value={newSurgery.pet} onChange={handleSurgeryInputChange} />
+              <input
+                type="text"
+                name="pet"
+                value={newSurgery.pet}
+                onChange={handleSurgeryInputChange}
+              />
 
               <label>Especie</label>
-              <select name="species" value={newSurgery.species} onChange={handleSurgeryInputChange}>
+              <select
+                name="species"
+                value={newSurgery.species}
+                onChange={handleSurgeryInputChange}
+              >
                 <option value="">Seleccionar especie</option>
                 {speciesOptions.map((s, idx) => (
-                  <option key={idx} value={s}>{s}</option>
+                  <option key={idx} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
 
@@ -1140,21 +1747,41 @@ const MedicalRecords = () => {
               )}
 
               <label>Raza</label>
-              <input type="text" name="breed" value={newSurgery.breed} onChange={handleSurgeryInputChange} />
+              <input
+                type="text"
+                name="breed"
+                value={newSurgery.breed}
+                onChange={handleSurgeryInputChange}
+              />
 
               <label>Sexo</label>
-              <select name="gender" value={newSurgery.gender} onChange={handleSurgeryInputChange}>
+              <select
+                name="gender"
+                value={newSurgery.gender}
+                onChange={handleSurgeryInputChange}
+              >
                 <option value="">Seleccionar género</option>
                 {genderOptions.map((g, idx) => (
-                  <option key={idx} value={g}>{g}</option>
+                  <option key={idx} value={g}>
+                    {g}
+                  </option>
                 ))}
               </select>
 
               <label>Edad</label>
-              <input type="text" name="age" value={newSurgery.age} onChange={handleSurgeryInputChange} />
+              <input
+                type="text"
+                name="age"
+                value={newSurgery.age}
+                onChange={handleSurgeryInputChange}
+              />
 
               <label>Descripción del caso</label>
-              <textarea name="caseDescription" value={newSurgery.caseDescription} onChange={handleSurgeryInputChange} />
+              <textarea
+                name="caseDescription"
+                value={newSurgery.caseDescription}
+                onChange={handleSurgeryInputChange}
+              />
 
               <label>Riesgos</label>
               {newSurgery.risks.map((risk, i) => (
@@ -1174,7 +1801,6 @@ const MedicalRecords = () => {
                   onClick={() => {
                     setShowSurgeryModal(false);
                     setEditingSurgery(null);
-                    setNewSurgery(initialSurgeryRecord());
                     setSurgeryImagePreview([]);
                   }}
                 >
@@ -1195,9 +1821,12 @@ const MedicalRecords = () => {
                   />
                 </label>
 
-                <button className="btn-surgery" onClick={openCareModal}>
-                  Cuidados En Casa
-                </button>
+                {/* Botón adicional SOLO al crear desde "Nuevo expediente" (no edición, no desde general) */}
+                {!newSurgery.fromGeneral && !editingSurgery && (
+                  <button className="btn-care" onClick={() => openCareModal()}>
+                    Cuidados en Casa
+                  </button>
+                )}
               </div>
 
               {surgeryImagePreview.length > 0 && (
@@ -1230,67 +1859,129 @@ const MedicalRecords = () => {
           Modal: Cuidados en Casa
         ========================= */}
       {showCareModal && (
-        <div className="modal-overlay" onClick={(e)=>{ if(e.target.classList.contains('modal-overlay')) setShowCareModal(false); }}>
-          <div className="modal" id={`care-${newCare.id || 'new'}`}>
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target.classList.contains("modal-overlay")) setShowCareModal(false);
+          }}
+        >
+          <div className="modal" id={`care-${newCare.id || "new"}`}>
             <div className="modal-header">
               <h2>{editingCare ? "Editar Cuidados en Casa" : "Cuidados en Casa"}</h2>
-              <button
-                className="modal-close"
-                onClick={() => {
-                  setShowCareModal(false);
-                  setEditingCare(null);
-                  setNewCare(initialCareRecord());
-                  setCareImagePreview([]);
-                }}
-                title="Cerrar"
-              >
-                <X size={20} />
+              {/* BROCHA: limpia y mantiene abierto */}
+              <button className="modal-clean" onClick={clearCareForm} title="Limpiar formulario">
+                <Brush size={20} />
               </button>
             </div>
             <div className="modal-body">
               <label>Propietario</label>
-              <input type="text" name="owner" value={newCare.owner} onChange={handleCareInputChange} />
+              <input
+                type="text"
+                name="owner"
+                value={newCare.owner}
+                onChange={handleCareInputChange}
+              />
+
+              <label>Teléfono</label>
+              <input
+                type="text"
+                name="ownerPhone"
+                value={newCare.ownerPhone}
+                onChange={handleCareInputChange}
+              />
 
               <label>Mascota</label>
-              <input type="text" name="pet" value={newCare.pet} onChange={handleCareInputChange} />
+              <input
+                type="text"
+                name="pet"
+                value={newCare.pet}
+                onChange={handleCareInputChange}
+              />
 
               <label>Especie</label>
-              <input type="text" name="species" value={newCare.species} onChange={handleCareInputChange} />
+              <select name="species" value={newCare.species} onChange={handleCareInputChange}>
+                <option value="">Seleccionar especie</option>
+                {speciesOptions.map((s, idx) => (
+                  <option key={idx} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
 
               <label>Sucursal</label>
-              <input type="text" name="branch" value={newCare.branch} onChange={handleCareInputChange} />
+              <input
+                type="text"
+                name="branch"
+                value={newCare.branch}
+                onChange={handleCareInputChange}
+              />
 
               <label>Instrucciones</label>
-              <textarea name="instructions" value={newCare.instructions} onChange={handleCareInputChange} />
+              <textarea
+                name="instructions"
+                value={newCare.instructions}
+                onChange={handleCareInputChange}
+              />
 
               <label>Medicaciones (fecha)</label>
               <input type="date" name="meds" value={newCare.meds} onChange={handleCareInputChange} />
 
               <label>Comida y Agua (fecha)</label>
-              <input type="date" name="foodWater" value={newCare.foodWater} onChange={handleCareInputChange} />
+              <input
+                type="date"
+                name="foodWater"
+                value={newCare.foodWater}
+                onChange={handleCareInputChange}
+              />
 
               <label>Ejercicio</label>
-              <input type="text" name="exercise" value={newCare.exercise} onChange={handleCareInputChange} />
+              <input
+                type="text"
+                name="exercise"
+                value={newCare.exercise}
+                onChange={handleCareInputChange}
+              />
 
               <label>Suturas</label>
-              <input type="text" name="sutures" value={newCare.sutures} onChange={handleCareInputChange} />
+              <input
+                type="text"
+                name="sutures"
+                value={newCare.sutures}
+                onChange={handleCareInputChange}
+              />
 
               <label>Instrucciones de Seguimiento</label>
-              <textarea name="followUp" value={newCare.followUp} onChange={handleCareInputChange} />
+              <textarea
+                name="followUp"
+                value={newCare.followUp}
+                onChange={handleCareInputChange}
+              />
 
               <label>Monitoreo en Casa</label>
-              <input type="text" name="monitoring" value={newCare.monitoring} onChange={handleCareInputChange} />
+              <input
+                type="text"
+                name="monitoring"
+                value={newCare.monitoring}
+                onChange={handleCareInputChange}
+              />
 
               <label>Contacto de Emergencia</label>
-              <input type="text" name="emergencyContact" value={newCare.emergencyContact} onChange={handleCareInputChange} />
+              <input
+                type="text"
+                name="emergencyContact"
+                value={newCare.emergencyContact}
+                onChange={handleCareInputChange}
+              />
 
               <div className="modal-buttons unified-buttons">
-                <button className="btn-cancel" onClick={() => {
-                  setShowCareModal(false);
-                  setEditingCare(null);
-                  setNewCare(initialCareRecord());
-                  setCareImagePreview([]);
-                }}>
+                <button
+                  className="btn-cancel"
+                  onClick={() => {
+                    setShowCareModal(false);
+                    setEditingCare(null);
+                    setCareImagePreview([]);
+                  }}
+                >
                   Cancelar
                 </button>
 
