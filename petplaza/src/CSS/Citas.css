@@ -7,6 +7,9 @@
   overflow: visible;
   display: flex;
   flex-direction: column;
+  position: relative;
+  gap:20px;
+
 }
 
 /* CABECERA (título + botón nueva cita) */
@@ -22,12 +25,16 @@
   color: #1d1d1f;
   font-size: 22px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  margin:0;
 }
 
 /* SUBTÍTULO */
 .citas-container .Citas-subtitulo {
   font-size: 14px;
   color: #6b7280;
+  margin: 0;
 }
 
 /* BOTÓN NUEVA CITA */
@@ -53,6 +60,9 @@
   margin: -18px 0 18px 0;
   width: 80%;
   max-width: 600px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .citas-container .citas-search input {
   width: 100%;
@@ -316,17 +326,29 @@
 .citas-container {
   position: relative; 
 }
-.citas-container .mensaje-exito {
+.citas-container {
   position: relative;
-  z-index: 10;
-  background-color:#d4edda;
-  color:#155724;
-  padding:10px 15px;
-  border-radius:6px;
-  margin:15px 0 10px 0;
-  font-weight:bold;
-  text-align:center;
 }
+
+/* Mensaje de éxito centrado */
+.citas-container .mensaje-exito {
+  position: relative;       
+  top: -15px; 
+  width: 90%;                
+  max-width: 800px;          
+  margin: -3px auto 0 auto;  
+  box-sizing: border-box;
+  background-color: #d4edda;
+  color: #155724;
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-weight: bold;
+  text-align: center;
+  z-index: 20;
+  display: block;
+}
+
+
 
 /* ANIMACIONES */
 @keyframes fadeIn { from {opacity:0; transform:scale(0.95);} to {opacity:1; transform:scale(1);} }
