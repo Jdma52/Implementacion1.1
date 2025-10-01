@@ -89,13 +89,14 @@
 
 /* Contenedor de listas */
 .dashboard-module .lists-grid {
-  flex: 1;                          /* Ocupar el espacio restante */
+  flex: 1;                          
   display: flex;
-  flex-direction: row;              /* Una al lado de la otra */
+  flex-direction: row;              
   gap: 2rem; 
   margin-left: 1.5rem; 
-  justify-content: space-between;   /* Espaciadas */
-  align-items: stretch;             /* Misma altura */
+  justify-content: space-between;  
+  align-items: stretch;             
+  margin-bottom: 5rem; 
 }
 
 /* Tarjetas de listas */
@@ -104,10 +105,10 @@
   padding: 1rem; 
   border-radius: 0.85rem;
   box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-  flex: 1;                          /* Cada una ocupa 50% */
+  flex: 1;                          
   display: flex;
   flex-direction: column; 
-  height: 100%;                     /* Llenan el espacio disponible */
+  height: 100%;                     
   overflow: hidden; 
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -127,7 +128,7 @@
 /* Lista dentro de la tarjeta */
 .dashboard-module .card ul {
   flex-grow: 1; 
-  overflow: hidden;             /* Quitamos scroll */
+  overflow: hidden;             
   padding: 0 0.5rem;
   margin: 0;
   width: 100%;
@@ -176,7 +177,7 @@
 .dashboard-module .list-icon.bg-blue { background: #6366F1; }
 .dashboard-module .list-icon.bg-red { background: #EF4444; }
 
-/* Quitamos scrollbar visual */
+/*Scroll*/
 .dashboard-module .card ul::-webkit-scrollbar {
   display: none;
 }
