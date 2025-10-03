@@ -39,8 +39,7 @@ const initialSurgeryRecord = () => ({
   id: null,
   generalId: null, // vínculo opcional al expediente general
   branch: "",
-  date: "",
-  time: "",
+  datetime: "", // fecha y hora en un solo campo
   owner: "",
   ownerPhone: "",
   ownerId: "",
@@ -49,7 +48,7 @@ const initialSurgeryRecord = () => ({
   otherSpecies: "",
   breed: "",
   gender: "",
-  age: "",
+  birthDate: "", // CAMBIO: antes "age"
   caseDescription: "",
   risks: ["", "", "", "", "", ""],
   images: [],
@@ -77,6 +76,25 @@ const initialCareRecord = () => ({
   createdAt: null,
   fromGeneral: false, // false = creado desde "Nuevo expediente" → línea naranja
 });
+
+/* =========================
+ *   Utilidades fecha/hora
+ * ========================= */
+const pad2 = (n) => String(n).padStart(2, "0");
+const nowLocalDateTimeValue = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = pad2(d.getMonth() + 1);
+  const da = pad2(d.getDate());
+  const hh = pad2(d.getHours());
+  const mm = pad2(d.getMinutes());
+  return `${y}-${m}-${da}T${hh}:${mm}`;
+};
+const dateToLocalDateTimeValue = (dateStr, defaultTime = "09:00") => {
+  if (!dateStr) return nowLocalDateTimeValue();
+  return `${dateStr}T${defaultTime}`;
+};
+const formatLocalDateTime = (dt) => (dt ? new Date(dt).toLocaleString() : "—");
 
 /* =========================
  *   Componente principal
@@ -165,7 +183,7 @@ const MedicalRecords = () => {
     return matchSelected && matchSearch;
   };
 
-  // Lista combinada y única de mascotas (los 3 expedientes)
+  // Lista combinada y única de mascotas/dueños (los 3 expedientes)
   const getAllPetOwnerOptions = () => {
     const all = [...generalRecords, ...surgeryRecords, ...careRecords];
     const seen = new Set();
@@ -179,6 +197,14 @@ const MedicalRecords = () => {
       }
     }
     return out;
+  };
+  const getUniqueOwners = () => {
+    const all = [...generalRecords, ...surgeryRecords, ...careRecords];
+    return [...new Set(all.map((r) => r.owner).filter(Boolean))];
+  };
+  const getUniquePets = () => {
+    const all = [...generalRecords, ...surgeryRecords, ...careRecords];
+    return [...new Set(all.map((r) => r.pet).filter(Boolean))];
   };
 
   /* =========================
@@ -363,7 +389,7 @@ const MedicalRecords = () => {
     if (type === "general") {
       const leftStartY = y;
       // columna izquierda
-      ["Paciente", "Especie", "Raza", "Sexo", "Peso", "Color"].forEach((label, i) => {
+      ["Paciente", "Especie", "Raza", "Sexo", "Peso", "Color"].forEach((label) => {
         const val =
           label === "Paciente"
             ? record.pet
@@ -455,8 +481,7 @@ const MedicalRecords = () => {
 
     if (type === "surgery") {
       row("Sucursal", record.branch);
-      row("Fecha", record.date);
-      row("Hora", record.time);
+      row("Fecha y hora", formatLocalDateTime(record.datetime));
       row("Propietario", record.owner);
       row("Teléfono", record.ownerPhone);
       row("ID/Pasaporte", record.ownerId);
@@ -464,7 +489,8 @@ const MedicalRecords = () => {
       row("Especie", record.species === "Otro" ? record.otherSpecies : record.species);
       row("Raza", record.breed);
       row("Sexo", record.gender);
-      row("Edad", record.age);
+      // CAMBIO: Fecha de nacimiento (soporta datos viejos con "age")
+      row("Fecha de nacimiento", record.birthDate || record.age || "—");
       block("Descripción del caso", record.caseDescription);
 
       const hasRisks = record.risks?.some((r) => r && r.trim());
@@ -475,7 +501,7 @@ const MedicalRecords = () => {
         pdf.text("Riesgos", margin, y);
         pdf.setTextColor(0, 0, 0);
         y += 6;
-        record.risks.forEach((risk, idx) => {
+        record.risks.forEach((risk) => {
           if (!risk) return;
           const lines = pdf.splitTextToSize(`• ${risk}`, pageW - margin * 2);
           lines.forEach((ln) => {
@@ -530,18 +556,15 @@ const MedicalRecords = () => {
 
         if (yCell + imgH > pageH - margin) {
           pdf.addPage();
-          y = margin;
         }
         try {
-          // Usamos JPEG por compatibilidad (también soporta data:image/png)
-          pdf.addImage(src, "JPEG", x, y + Math.floor(i / cols) * (imgH + gutter), imgW, imgH);
-        } catch (err) {
-          // Ignoramos errores de imágenes corruptas
-        }
+          const yOffset = y + Math.floor(i / cols) * (imgH + gutter);
+          pdf.addImage(src, "JPEG", x, yOffset, imgW, imgH);
+        } catch {}
       });
     }
 
-    // Pie (solo una línea de crédito)
+    // Pie
     pdf.setFontSize(9);
     pdf.setTextColor(130, 130, 130);
     pdf.text(
@@ -659,7 +682,11 @@ const MedicalRecords = () => {
 
   // Abrir cirugía desde menú "Nuevo expediente" (NO autollenar, color naranja)
   const openSurgeryModal = () => {
-    setNewSurgery({ ...initialSurgeryRecord(), fromGeneral: false });
+    setNewSurgery({
+      ...initialSurgeryRecord(),
+      fromGeneral: false,
+      datetime: nowLocalDateTimeValue(), // preseleccionar fecha y hora
+    });
     setEditingSurgery(null);
     setSurgeryImagePreview([]);
     setShowSurgeryModal(true);
@@ -673,7 +700,7 @@ const MedicalRecords = () => {
       ...base,
       generalId: editingRecord ? editingRecord.id : null,
       branch: ctx.branch || "",
-      date: ctx.date || "",
+      datetime: ctx.date ? dateToLocalDateTimeValue(ctx.date) : nowLocalDateTimeValue(),
       owner: ctx.owner || "",
       ownerPhone: ctx.ownerPhone || "",
       pet: ctx.pet || "",
@@ -681,7 +708,7 @@ const MedicalRecords = () => {
       otherSpecies: ctx.otherSpecies || "",
       breed: ctx.breed || "",
       gender: ctx.gender || "",
-      age: ctx.age || "",
+      birthDate: ctx.birthDate || "",
       fromGeneral: true,
     });
     setEditingSurgery(null);
@@ -690,8 +717,8 @@ const MedicalRecords = () => {
   };
 
   const handleAddOrUpdateSurgery = () => {
-    if (!newSurgery.owner || !newSurgery.pet || !newSurgery.date) {
-      alert("Completa Dueño, Mascota y Fecha.");
+    if (!newSurgery.owner || !newSurgery.pet || !newSurgery.datetime) {
+      alert("Completa Dueño, Mascota y Fecha y hora.");
       return;
     }
 
@@ -813,15 +840,18 @@ const MedicalRecords = () => {
   };
 
   const clearSurgeryForm = () => {
-    // mantener flags de origen
     const { fromGeneral, generalId } = newSurgery;
-    setNewSurgery({ ...initialSurgeryRecord(), fromGeneral, generalId });
+    setNewSurgery({
+      ...initialSurgeryRecord(),
+      fromGeneral,
+      generalId,
+      datetime: nowLocalDateTimeValue(),
+    });
     setSurgeryImagePreview([]);
     setEditingSurgery(null);
   };
 
   const clearCareForm = () => {
-    // mantener flags de origen
     const { fromGeneral, generalId } = newCare;
     setNewCare({ ...initialCareRecord(), fromGeneral, generalId });
     setCareImagePreview([]);
@@ -891,7 +921,7 @@ const MedicalRecords = () => {
               <button
                 onClick={() => {
                   setShowDropdown(false);
-                  openSurgeryModal(); // SIN autollenado, marcará naranja (fromGeneral=false)
+                  openSurgeryModal(); // SIN autollenado, marcará naranja
                 }}
               >
                 Quirúrgico
@@ -899,7 +929,7 @@ const MedicalRecords = () => {
               <button
                 onClick={() => {
                   setShowDropdown(false);
-                  openCareModal(); // SIN autollenado, marcará naranja (fromGeneral=false)
+                  openCareModal(); // SIN autollenado, marcará naranja
                 }}
               >
                 Cuidados en Casa
@@ -1107,7 +1137,7 @@ const MedicalRecords = () => {
                       <>
                         {s.pet || "Mascota"} ({s.species || "—"}) • {s.owner || "Propietario"}{" "}
                         <br />
-                        Fecha: {s.date || "—"} • Hora: {s.time || "—"}
+                        Fecha y hora: {formatLocalDateTime(s.datetime)}
                       </>
                     )}
                   </span>
@@ -1145,10 +1175,7 @@ const MedicalRecords = () => {
                 {isOpen && (
                   <div className="record-body">
                     <p>
-                      <strong>Fecha:</strong> {s.date || "N/A"}
-                    </p>
-                    <p>
-                      <strong>Hora:</strong> {s.time || "N/A"}
+                      <strong>Fecha y hora:</strong> {formatLocalDateTime(s.datetime)}
                     </p>
                     <p>
                       <strong>Propietario:</strong> {s.owner || "N/A"}
@@ -1173,7 +1200,7 @@ const MedicalRecords = () => {
                       <strong>Sexo:</strong> {s.gender || "N/A"}
                     </p>
                     <p>
-                      <strong>Edad:</strong> {s.age || "N/A"}
+                      <strong>Fecha de nacimiento:</strong> {s.birthDate || s.age || "N/A"}
                     </p>
                     <p>
                       <strong>Descripción del caso:</strong> {s.caseDescription || "N/A"}
@@ -1381,21 +1408,24 @@ const MedicalRecords = () => {
               <h2>
                 {editingRecord ? "Editar Expediente General" : "Nuevo Expediente General"}
               </h2>
-              {/* BROCHA: limpia y mantiene abierto */}
               <button className="modal-clean" onClick={clearGeneralForm} title="Limpiar formulario">
                 <Brush size={20} />
               </button>
             </div>
 
             <div className="modal-body">
+              {/* Dueño → menú desplegable */}
               <label>Dueño</label>
-              <input
-                type="text"
+              <select
                 name="owner"
-                placeholder="Nombre del dueño"
                 value={newRecord.owner}
                 onChange={handleInputChange}
-              />
+              >
+                <option value="">Seleccionar dueño</option>
+                {getUniqueOwners().map((o, idx) => (
+                  <option key={idx} value={o}>{o}</option>
+                ))}
+              </select>
 
               <label>Teléfono Propietario</label>
               <input
@@ -1406,14 +1436,18 @@ const MedicalRecords = () => {
                 onChange={handleInputChange}
               />
 
+              {/* Mascota → menú desplegable */}
               <label>Mascota</label>
-              <input
-                type="text"
+              <select
                 name="pet"
-                placeholder="Nombre de la mascota"
                 value={newRecord.pet}
                 onChange={handleInputChange}
-              />
+              >
+                <option value="">Seleccionar mascota</option>
+                {getUniquePets().map((p, idx) => (
+                  <option key={idx} value={p}>{p}</option>
+                ))}
+              </select>
 
               <label>Especie</label>
               <select name="species" value={newRecord.species} onChange={handleInputChange}>
@@ -1656,44 +1690,23 @@ const MedicalRecords = () => {
           <div className="modal" id={`surgery-${newSurgery.id || "new"}`}>
             <div className="modal-header">
               <h2>{editingSurgery ? "Editar Expediente Quirúrgico" : "Expediente Quirúrgico"}</h2>
-              {/* BROCHA: limpia y mantiene abierto */}
               <button className="modal-clean" onClick={clearSurgeryForm} title="Limpiar formulario">
                 <Brush size={20} />
               </button>
             </div>
 
             <div className="modal-body">
-              <label>Sucursal</label>
-              <input
-                type="text"
-                name="branch"
-                value={newSurgery.branch}
-                onChange={handleSurgeryInputChange}
-              />
-
-              <label>Fecha</label>
-              <input
-                type="date"
-                name="date"
-                value={newSurgery.date}
-                onChange={handleSurgeryInputChange}
-              />
-
-              <label>Hora</label>
-              <input
-                type="text"
-                name="time"
-                value={newSurgery.time}
-                onChange={handleSurgeryInputChange}
-              />
-
-              <label>Nombre del propietario</label>
-              <input
-                type="text"
+              <label>Dueño</label>
+              <select
                 name="owner"
                 value={newSurgery.owner}
                 onChange={handleSurgeryInputChange}
-              />
+              >
+                <option value="">Seleccionar dueño</option>
+                {getUniqueOwners().map((o, idx) => (
+                  <option key={idx} value={o}>{o}</option>
+                ))}
+              </select>
 
               <label>Teléfono del propietario</label>
               <input
@@ -1712,11 +1725,38 @@ const MedicalRecords = () => {
               />
 
               <label>Nombre de la mascota</label>
-              <input
-                type="text"
+              <select
                 name="pet"
                 value={newSurgery.pet}
                 onChange={handleSurgeryInputChange}
+              >
+                <option value="">Seleccionar mascota</option>
+                {getUniquePets().map((p, idx) => (
+                  <option key={idx} value={p}>{p}</option>
+                ))}
+              </select>
+
+              <label>Sucursal</label>
+              <input
+                type="text"
+                name="branch"
+                value={newSurgery.branch}
+                onChange={handleSurgeryInputChange}
+              />
+
+              {/* Fecha + Hora en un solo campo */}
+              <label>Fecha y hora</label>
+              <input
+                type="datetime-local"
+                name="datetime"
+                value={newSurgery.datetime}
+                onChange={(e) => {
+                  let v = e.target.value;
+                  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+                    v = `${v}T${pad2(new Date().getHours())}:${pad2(new Date().getMinutes())}`;
+                  }
+                  setNewSurgery((prev) => ({ ...prev, datetime: v }));
+                }}
               />
 
               <label>Especie</label>
@@ -1768,11 +1808,12 @@ const MedicalRecords = () => {
                 ))}
               </select>
 
-              <label>Edad</label>
+              {/* CAMBIO: Edad -> Fecha de nacimiento (calendario) */}
+              <label>Fecha de nacimiento</label>
               <input
-                type="text"
-                name="age"
-                value={newSurgery.age}
+                type="date"
+                name="birthDate"
+                value={newSurgery.birthDate}
                 onChange={handleSurgeryInputChange}
               />
 
@@ -1821,7 +1862,6 @@ const MedicalRecords = () => {
                   />
                 </label>
 
-                {/* Botón adicional SOLO al crear desde "Nuevo expediente" (no edición, no desde general) */}
                 {!newSurgery.fromGeneral && !editingSurgery && (
                   <button className="btn-care" onClick={() => openCareModal()}>
                     Cuidados en Casa
@@ -1868,19 +1908,22 @@ const MedicalRecords = () => {
           <div className="modal" id={`care-${newCare.id || "new"}`}>
             <div className="modal-header">
               <h2>{editingCare ? "Editar Cuidados en Casa" : "Cuidados en Casa"}</h2>
-              {/* BROCHA: limpia y mantiene abierto */}
               <button className="modal-clean" onClick={clearCareForm} title="Limpiar formulario">
                 <Brush size={20} />
               </button>
             </div>
             <div className="modal-body">
               <label>Propietario</label>
-              <input
-                type="text"
+              <select
                 name="owner"
                 value={newCare.owner}
                 onChange={handleCareInputChange}
-              />
+              >
+                <option value="">Seleccionar dueño</option>
+                {getUniqueOwners().map((o, idx) => (
+                  <option key={idx} value={o}>{o}</option>
+                ))}
+              </select>
 
               <label>Teléfono</label>
               <input
@@ -1891,12 +1934,16 @@ const MedicalRecords = () => {
               />
 
               <label>Mascota</label>
-              <input
-                type="text"
+              <select
                 name="pet"
                 value={newCare.pet}
                 onChange={handleCareInputChange}
-              />
+              >
+                <option value="">Seleccionar mascota</option>
+                {getUniquePets().map((p, idx) => (
+                  <option key={idx} value={p}>{p}</option>
+                ))}
+              </select>
 
               <label>Especie</label>
               <select name="species" value={newCare.species} onChange={handleCareInputChange}>
