@@ -1,8 +1,10 @@
 // src/components/MedicalRecords.js
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Plus, Search, Edit, Trash2, FileDown, Brush } from "lucide-react";
 import jsPDF from "jspdf";
 import "../CSS/MedicalRecords.css";
+// ⬇️ Asegúrate de que la ruta coincida con tu estructura de proyecto
+import logoSrc from "../assets/petigato_logo.jpeg";
 
 /* =========================
  *   Estructuras iniciales
@@ -37,9 +39,9 @@ const initialGeneralRecord = () => ({
 
 const initialSurgeryRecord = () => ({
   id: null,
-  generalId: null, // vínculo opcional al expediente general
+  generalId: null,
   branch: "",
-  datetime: "", // fecha y hora en un solo campo
+  datetime: "",
   owner: "",
   ownerPhone: "",
   ownerId: "",
@@ -48,25 +50,25 @@ const initialSurgeryRecord = () => ({
   otherSpecies: "",
   breed: "",
   gender: "",
-  birthDate: "", // CAMBIO: antes "age"
+  birthDate: "",
   caseDescription: "",
   risks: ["", "", "", "", "", ""],
   images: [],
   createdAt: null,
-  fromGeneral: false, // false = creado desde "Nuevo expediente" → línea naranja
+  fromGeneral: false,
 });
 
 const initialCareRecord = () => ({
   id: null,
-  generalId: null, // vínculo opcional al expediente general
+  generalId: null,
   owner: "",
   ownerPhone: "",
   pet: "",
   species: "",
   branch: "",
   instructions: "",
-  meds: "", // date
-  foodWater: "", // date
+  meds: "",
+  foodWater: "",
   exercise: "",
   sutures: "",
   followUp: "",
@@ -74,7 +76,7 @@ const initialCareRecord = () => ({
   emergencyContact: "",
   images: [],
   createdAt: null,
-  fromGeneral: false, // false = creado desde "Nuevo expediente" → línea naranja
+  fromGeneral: false,
 });
 
 /* =========================
@@ -147,11 +149,59 @@ const MedicalRecords = () => {
 
   const pdfRef = useRef();
 
+  /* ====== LOGO para PDF (pre-cargado a dataURL) ====== */
+  const [logoDataUrl, setLogoDataUrl] = useState(null);
+  useEffect(() => {
+    if (!logoSrc) return;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = logoSrc;
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL("image/jpeg");
+        setLogoDataUrl(dataUrl);
+      } catch {
+        setLogoDataUrl(null);
+      }
+    };
+  }, []);
+
   /* ====== Catálogos ====== */
   const vets = ["Dra. María González", "Dr. Carlos López", "Dra. Ana Torres"];
   const speciesOptions = ["Perro", "Gato", "Ave", "Conejo", "Otro"];
   const genderOptions = ["Macho", "Hembra"];
   const bloodDonorOptions = ["Sí", "No"];
+
+  // ➕ Listas ficticias para facilitar la creación de expedientes
+  const demoOwners = [
+    "María Pérez",
+    "Carlos Ramírez",
+    "Ana Torres",
+    "Luis Fernández",
+    "Carmen Díaz",
+    "Jorge Castillo",
+    "Patricia Gómez",
+    "Ricardo Morales",
+    "Sofía Herrera",
+    "Daniela Ruiz",
+  ];
+  const demoPets = [
+    "Luna",
+    "Max",
+    "Simba",
+    "Coco",
+    "Rocky",
+    "Milo",
+    "Nala",
+    "Chispita",
+    "Tom",
+    "Bobby",
+  ];
 
   /* ====== Acordeón ====== */
   const [expandedId, setExpandedId] = useState(null);
@@ -183,7 +233,12 @@ const MedicalRecords = () => {
     return matchSelected && matchSearch;
   };
 
-  // Lista combinada y única de mascotas/dueños (los 3 expedientes)
+  // Unir opciones (existentes + ficticias), únicas
+  const uniqueMerge = (arr) =>
+    Array.from(new Set(arr.filter(Boolean))).sort((a, b) =>
+      a.localeCompare(b, "es", { sensitivity: "base" })
+    );
+
   const getAllPetOwnerOptions = () => {
     const all = [...generalRecords, ...surgeryRecords, ...careRecords];
     const seen = new Set();
@@ -198,13 +253,14 @@ const MedicalRecords = () => {
     }
     return out;
   };
+
   const getUniqueOwners = () => {
-    const all = [...generalRecords, ...surgeryRecords, ...careRecords];
-    return [...new Set(all.map((r) => r.owner).filter(Boolean))];
+    const all = [...generalRecords, ...surgeryRecords, ...careRecords].map((r) => r.owner);
+    return uniqueMerge([...demoOwners, ...all]);
   };
   const getUniquePets = () => {
-    const all = [...generalRecords, ...surgeryRecords, ...careRecords];
-    return [...new Set(all.map((r) => r.pet).filter(Boolean))];
+    const all = [...generalRecords, ...surgeryRecords, ...careRecords].map((r) => r.pet);
+    return uniqueMerge([...demoPets, ...all]);
   };
 
   /* =========================
@@ -312,7 +368,7 @@ const MedicalRecords = () => {
   };
 
   /* =========================
-   *   Exportación PDF (unificada)
+   *   Exportación PDF (unificada) + LOGO
    * ========================= */
   const handleExportPDF = (record, type) => {
     const pdf = new jsPDF("p", "mm", "a4");
@@ -326,9 +382,25 @@ const MedicalRecords = () => {
     if (type === "surgery") color = record.fromGeneral ? [212, 68, 68] : [255, 165, 0];
     if (type === "care") color = record.fromGeneral ? [0, 123, 255] : [255, 165, 0];
 
-    // Encabezado
+    // Encabezado (barra superior)
     pdf.setFillColor(...color);
     pdf.rect(0, 0, pageW, 18, "F");
+
+    // Logo (si está disponible), lo colocamos a la izquierda
+    let titleX = margin;
+    if (logoDataUrl) {
+      try {
+        const logoW = 24; // mm
+        const logoH = 12; // mm
+        const logoX = margin;
+        const logoY = 3; // dentro de la barra
+        pdf.addImage(logoDataUrl, "JPEG", logoX, logoY, logoW, logoH);
+        titleX = margin + logoW + 4; // desplazar el título a la derecha del logo
+      } catch {
+        // si falla, no bloquea la exportación
+      }
+    }
+
     pdf.setTextColor(255, 255, 255);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(14);
@@ -338,7 +410,7 @@ const MedicalRecords = () => {
         : type === "surgery"
         ? "Expediente Cirugía"
         : "Cuidados en Casa",
-      margin,
+      titleX,
       12
     );
     pdf.setFont("helvetica", "normal");
@@ -388,7 +460,6 @@ const MedicalRecords = () => {
     // Contenido según tipo
     if (type === "general") {
       const leftStartY = y;
-      // columna izquierda
       ["Paciente", "Especie", "Raza", "Sexo", "Peso", "Color"].forEach((label) => {
         const val =
           label === "Paciente"
@@ -407,7 +478,6 @@ const MedicalRecords = () => {
         row(label, val);
       });
 
-      // columna derecha
       let yRight = leftStartY;
       const rightX = pageW / 2 + 5;
       const rowRight = (label, value) => {
@@ -489,7 +559,6 @@ const MedicalRecords = () => {
       row("Especie", record.species === "Otro" ? record.otherSpecies : record.species);
       row("Raza", record.breed);
       row("Sexo", record.gender);
-      // CAMBIO: Fecha de nacimiento (soporta datos viejos con "age")
       row("Fecha de nacimiento", record.birthDate || record.age || "—");
       block("Descripción del caso", record.caseDescription);
 
@@ -666,7 +735,6 @@ const MedicalRecords = () => {
 
   /* =========================
    *   Cirugía (inputs y CRUD)
-   *   + Autollenado SOLO si se parte del General
    * ========================= */
   const handleSurgeryInputChange = (e, index = null) => {
     const { name, value } = e.target;
@@ -685,7 +753,7 @@ const MedicalRecords = () => {
     setNewSurgery({
       ...initialSurgeryRecord(),
       fromGeneral: false,
-      datetime: nowLocalDateTimeValue(), // preseleccionar fecha y hora
+      datetime: nowLocalDateTimeValue(),
     });
     setEditingSurgery(null);
     setSurgeryImagePreview([]);
@@ -694,7 +762,7 @@ const MedicalRecords = () => {
 
   // Abrir cirugía desde un General (autollenado, color normal rojo)
   const openSurgeryFromGeneral = () => {
-    const ctx = editingRecord || newRecord; // permite autollenar incluso sin guardar
+    const ctx = editingRecord || newRecord;
     const base = initialSurgeryRecord();
     setNewSurgery({
       ...base,
@@ -757,14 +825,13 @@ const MedicalRecords = () => {
 
   /* =========================
    *   Cuidados en casa (inputs y CRUD)
-   *   + Autollenado SOLO si se parte del General
    * ========================= */
   const handleCareInputChange = (e) => {
     const { name, value } = e.target;
     setNewCare((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Abrir cuidados desde menú "Nuevo expediente" (NO autollenar, color naranja)
+  // Abrir cuidados desde menú "Nuevo expediente" (NO autollenado, color naranja)
   const openCareModal = () => {
     setNewCare({ ...initialCareRecord(), fromGeneral: false });
     setEditingCare(null);
@@ -921,7 +988,7 @@ const MedicalRecords = () => {
               <button
                 onClick={() => {
                   setShowDropdown(false);
-                  openSurgeryModal(); // SIN autollenado, marcará naranja
+                  openSurgeryModal();
                 }}
               >
                 Quirúrgico
@@ -929,7 +996,7 @@ const MedicalRecords = () => {
               <button
                 onClick={() => {
                   setShowDropdown(false);
-                  openCareModal(); // SIN autollenado, marcará naranja
+                  openCareModal();
                 }}
               >
                 Cuidados en Casa
@@ -1414,7 +1481,7 @@ const MedicalRecords = () => {
             </div>
 
             <div className="modal-body">
-              {/* Dueño → menú desplegable */}
+              {/* Dueño → menú desplegable (incluye ficticios) */}
               <label>Dueño</label>
               <select
                 name="owner"
@@ -1436,7 +1503,7 @@ const MedicalRecords = () => {
                 onChange={handleInputChange}
               />
 
-              {/* Mascota → menú desplegable */}
+              {/* Mascota → menú desplegable (incluye ficticias) */}
               <label>Mascota</label>
               <select
                 name="pet"
@@ -1641,7 +1708,7 @@ const MedicalRecords = () => {
                   />
                 </label>
 
-                {/* Abrir modales derivados DESDE GENERAL (autollenado permitido) */}
+                {/* Abrir modales derivados DESDE GENERAL */}
                 <button className="btn-surgery" onClick={openSurgeryFromGeneral}>
                   Expediente Cirugía
                 </button>
@@ -1744,7 +1811,6 @@ const MedicalRecords = () => {
                 onChange={handleSurgeryInputChange}
               />
 
-              {/* Fecha + Hora en un solo campo */}
               <label>Fecha y hora</label>
               <input
                 type="datetime-local"
@@ -1808,7 +1874,6 @@ const MedicalRecords = () => {
                 ))}
               </select>
 
-              {/* CAMBIO: Edad -> Fecha de nacimiento (calendario) */}
               <label>Fecha de nacimiento</label>
               <input
                 type="date"
