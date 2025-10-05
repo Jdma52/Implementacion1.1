@@ -10,6 +10,9 @@ import "../CSS/Facturacion.css";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// Importar el logo
+import logo from "../assets/logo1.png";
+
 const Facturacion = ({ dueñosData, mascotasData }) => {
   // Estado del componente
   const [facturas, setFacturas] = useState([
@@ -199,93 +202,212 @@ const Facturacion = ({ dueñosData, mascotasData }) => {
     mostrarNotificacion("Estado de factura actualizado");
   };
   
-  const generarPDF = (facturaData) => {
-    // Usa la factura pasada como argumento, o la seleccionada en el estado si no se pasa ninguna
-    const factura = facturaData || facturaSeleccionada;
-    if (!factura) return;
-    
-    const doc = new jsPDF();
-    
-    // Encabezado de la factura
-    doc.setFontSize(20);
-    doc.setTextColor(40, 180, 130);
-    doc.text("PetPlaza", 105, 20, { align: "center" });
-    doc.setFontSize(12);
-    doc.setTextColor(100, 100, 100);
-    doc.text("Sistema de Gestión Veterinaria", 105, 28, { align: "center" });
-    doc.text("Tegucigalpa, Ave. La Paz - Tel: +504 2242-5850", 105, 35, { align: "center" });
-    
-    // Línea separadora
-    doc.setDrawColor(200, 200, 200);
-    doc.line(15, 42, 195, 42);
-    
-    // Título de factura
-    doc.setFontSize(16);
-    doc.setTextColor(0, 0, 0);
-    doc.text("FACTURA", 105, 52, { align: "center" });
-    
-    // Información de la factura
-    doc.setFontSize(10);
-    doc.text(`Número: ${factura.numero}`, 20, 65);
-    doc.text(`Fecha: ${factura.fecha}`, 20, 72);
-    doc.text(`Estado: ${factura.estado}`, 20, 79);
-    
-    // Información del cliente
-    doc.text(`Cliente: ${factura.cliente}`, 120, 65);
-    doc.text(`Mascota: ${factura.mascota}`, 120, 72);
-    doc.text(`RTN: ${factura.rtn || 'No especificado'}`, 120, 79);
-    doc.text(`Método de pago: ${factura.metodoPago}`, 120, 86);
-    
-    // Tabla de items
-    const tableColumn = ["Descripción", "Cantidad", "Precio Unit.", "Total"];
-    const tableRows = [];
-    
-    factura.servicios.forEach(servicio => {
-      const servicioData = [
-        servicio.nombre,
-        servicio.cantidad,
-        `L. ${servicio.precio.toFixed(2)}`,
-        `L. ${(servicio.precio * servicio.cantidad).toFixed(2)}`
-      ];
-      tableRows.push(servicioData);
-    });
-    
-    factura.productos.forEach(producto => {
-      const productoData = [
-        producto.nombre,
-        producto.cantidad,
-        `L. ${producto.precio.toFixed(2)}`,
-        `L. ${(producto.precio * producto.cantidad).toFixed(2)}`
-      ];
-      tableRows.push(productoData);
-    });
-    
-    // Agregar la tabla al PDF
-    autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: 95,
-      theme: 'grid',
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [40, 180, 130] }
-    });
+const generarPDF = (facturaData) => {
+  const factura = facturaData || facturaSeleccionada;
+  if (!factura) return;
   
-    // Totales
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.text(`Subtotal: L. ${factura.subtotal.toFixed(2)}`, 150, finalY);
-    doc.text(`ISV (15%): L. ${factura.impuesto.toFixed(2)}`, 150, finalY + 7);
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.text(`TOTAL: L. ${factura.total.toFixed(2)}`, 150, finalY + 17);
-    
-    // Pie de página
+  const doc = new jsPDF();
+  
+  // ==================== ENCABEZADO PROFESIONAL MEJORADO ====================
+  // Información de la empresa en el lado izquierdo - más compacta
+  doc.setFontSize(12);
+  doc.setTextColor(40, 180, 130);
+  doc.setFont(undefined, 'bold');
+  doc.text("A.L.M. INVERSIONES SRL", 20, 15);
+  
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont(undefined, 'normal');
+  doc.text("PetPlaza HospiVet - Sistema de Gestión Veterinaria", 20, 21);
+  doc.text("Tegucigalpa, Ave. La Paz, Col. Palmira", 20, 26);
+  doc.text("Tel: +504 2242-5850 | RTN: 08010000000000", 20, 31);
+  
+  // Logo centrado y mejor posicionado
+  if (logo) {
+    try {
+      // Logo más pequeño y mejor posicionado
+      const logoWidth = 35;  // Reducido para mejor balance
+      const logoHeight = 25; // Reducido para mejor balance
+      const logoX = 160;     // Posición desde la derecha
+      const logoY = 12;      // Posición desde arriba
+      
+      doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
+      
+      // Marco decorativo opcional alrededor del logo
+      doc.setDrawColor(40, 180, 130);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(logoX - 2, logoY - 2, logoWidth + 4, logoHeight + 4, 2, 2);
+    } catch (error) {
+      console.warn("Error al cargar el logo:", error);
+      // Fallback: texto si el logo no carga
+      doc.setFontSize(10);
+      doc.setTextColor(40, 180, 130);
+      doc.text("PETPLAZA", 160, 20);
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text("HOSPIVET", 160, 25);
+    }
+  } else {
+    // Fallback cuando no hay logo
     doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.text("¡Gracias por confiar en PetPlaza!", 105, finalY + 30, { align: "center" });
-    
-    // Guardar el PDF
-    doc.save(`factura-${factura.numero}.pdf`);
-  };
+    doc.setTextColor(40, 180, 130);
+    doc.text("PETPLAZA", 160, 20);
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text("HOSPIVET", 160, 25);
+  }
+  
+// Línea con color de marca pero muy sutil
+//doc.setDrawColor(40, 180, 130); 
+//doc.setLineWidth(0.2); 
+//doc.line(20, 42, 190, 42);
+  
+  // ==================== TÍTULO FACTURA ====================
+  doc.setFontSize(16);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(undefined, 'bold');
+  doc.text("FACTURA", 105, 48, { align: "center" });
+  
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont(undefined, 'normal');
+  doc.text("Documento Tributario - Factura Electrónica", 105, 53, { align: "center" });
+  
+  // ==================== INFORMACIÓN DE FACTURA Y CLIENTE ====================
+  // Fondo para sección de información
+  doc.setFillColor(250, 250, 250);
+  doc.roundedRect(15, 58, 180, 35, 3, 3, 'F');
+  doc.setDrawColor(220, 220, 220);
+  doc.roundedRect(15, 58, 180, 35, 3, 3);
+  
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(undefined, 'bold');
+  
+  // Encabezados de columnas - 
+  doc.text("INFORMACIÓN DE FACTURA", 30, 66);
+  doc.text("INFORMACIÓN DEL CLIENTE", 120, 66);
+  
+  doc.setFont(undefined, 'normal');
+  doc.setFontSize(9);
+  
+  // Columna izquierda - Información de factura - 
+  doc.text(`Número: ${factura.numero}`, 20, 73);
+  doc.text(`Fecha: ${factura.fecha}`, 20, 78);
+  doc.text(`Estado: ${factura.estado}`, 20, 83);
+  doc.text(`Método de pago: ${factura.metodoPago}`, 20, 88);
+  
+  // Columna derecha - Información de cliente
+  doc.text(`Cliente: ${factura.cliente}`, 120, 73);
+  doc.text(`Mascota: ${factura.mascota}`, 120, 78);
+  doc.text(`RTN: ${factura.rtn || 'No especificado'}`, 120, 83);
+  
+  // ==================== TABLA DE DETALLES ====================
+  const tableColumn = ["Descripción", "Cant.", "Precio Unit.", "Total"];
+  const tableRows = [];
+  
+  // Agregar servicios
+  factura.servicios.forEach(servicio => {
+    const servicioData = [
+      servicio.nombre,
+      servicio.cantidad.toString(),
+      `L. ${servicio.precio.toFixed(2)}`,
+      `L. ${(servicio.precio * servicio.cantidad).toFixed(2)}`
+    ];
+    tableRows.push(servicioData);
+  });
+  
+  // Agregar productos
+  factura.productos.forEach(producto => {
+    const productoData = [
+      producto.nombre,
+      producto.cantidad.toString(),
+      `L. ${producto.precio.toFixed(2)}`,
+      `L. ${(producto.precio * producto.cantidad).toFixed(2)}`
+    ];
+    tableRows.push(productoData);
+  });
+  
+  // Crear tabla con autotable 
+  autoTable(doc, {
+    head: [tableColumn],
+    body: tableRows,
+    startY: 98, 
+    theme: 'grid',
+    styles: { 
+      fontSize: 9,
+      cellPadding: 4,
+      lineColor: [200, 200, 200],
+      lineWidth: 0.1,
+    },
+    headStyles: { 
+      fillColor: [40, 180, 130],
+      textColor: 255,
+      fontStyle: 'bold',
+      lineWidth: 0.1,
+    },
+    bodyStyles: {
+      lineWidth: 0.1,
+    },
+    columnStyles: {
+      0: { cellWidth: 'auto', fontStyle: 'bold' },
+      1: { cellWidth: 15, halign: 'center' },
+      2: { cellWidth: 25, halign: 'right' },
+      3: { cellWidth: 25, halign: 'right', fontStyle: 'bold' }
+    },
+    margin: { left: 15, right: 15 },
+    tableLineWidth: 0.1,
+  });
+  
+  // ==================== TOTALES  ====================
+  const finalY = doc.lastAutoTable.finalY + 10;
+  
+  // Fondo para totales
+  doc.setFillColor(245, 245, 245);
+  doc.roundedRect(120, finalY - 5, 75, 35, 3, 3, 'F');
+  
+  // Bordes para la sección de totales
+  doc.setDrawColor(200, 200, 200);
+  doc.roundedRect(120, finalY - 5, 75, 35, 3, 3);
+  
+  // Texto de totales
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.text("Subtotal:", 125, finalY + 5);
+  doc.text(`L. ${factura.subtotal.toFixed(2)}`, 175, finalY + 5, { align: "right" });
+  
+  doc.text("ISV (15%):", 125, finalY + 12);
+  doc.text(`L. ${factura.impuesto.toFixed(2)}`, 175, finalY + 12, { align: "right" });
+  
+  // Línea separadora antes del total
+  doc.setDrawColor(150, 150, 150);
+  doc.line(125, finalY + 16, 175, finalY + 16);
+  
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(40, 180, 130);
+  doc.text("TOTAL:", 125, finalY + 25);
+  doc.text(`L. ${factura.total.toFixed(2)}`, 175, finalY + 25, { align: "right" });
+  
+  // ==================== PIE DE PÁGINA PROFESIONAL ====================
+  const footerY = finalY + 40;
+  
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont(undefined, 'italic');
+  
+  // Línea separadora del footer
+  doc.setDrawColor(200, 200, 200);
+  doc.line(15, footerY - 5, 195, footerY - 5);
+  
+  doc.text("¡Gracias por confiar en PetPlaza HospiVet!", 105, footerY, { align: "center" });
+  doc.text("Su satisfacción y la salud de su mascota son nuestra prioridad", 105, footerY + 5, { align: "center" });
+  doc.text("Factura generada electrónicamente - A.L.M. Inversiones SRL", 105, footerY + 10, { align: "center" });
+  
+  // ==================== GUARDAR PDF ====================
+  doc.save(`factura-${factura.numero}.pdf`);
+};
+
 
   const filteredFacturas = facturas.filter(f =>
     Object.values(f).some(val => String(val).toLowerCase().includes(searchTerm.toLowerCase()))
@@ -664,4 +786,3 @@ const Facturacion = ({ dueñosData, mascotasData }) => {
 };
 
 export default Facturacion;
-
