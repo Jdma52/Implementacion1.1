@@ -1,3 +1,5 @@
+/* ====== SCOPE EXCLUSIVO PARA Reports.js ====== */
+
 .reports-container {
   padding: 20px;
   font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -7,26 +9,23 @@
 }
 
 /* Header */
-.reports-header {
+.reports-container .reports-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
 }
-
-.reports-header h1 {
+.reports-container .reports-header h1 {
   font-size: 1.8rem;
   font-weight: bold;
   color: #222;
 }
-
-.reports-date-picker {
+.reports-container .reports-date-picker {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
-.reports-date-picker input {
+.reports-container .reports-date-picker input {
   padding: 6px 12px;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -34,22 +33,20 @@
   font-size: 0.95rem;
   cursor: pointer;
 }
-
-.reports-date-picker input:hover,
-.reports-date-picker input:focus {
+.reports-container .reports-date-picker input:hover,
+.reports-container .reports-date-picker input:focus {
   border: 1px solid #16a34a;
   box-shadow: 0 0 4px rgba(22, 163, 74, 0.4);
 }
 
 /* Cards estadísticas */
-.reports-stats-grid {
+.reports-container .reports-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 15px;
   margin-bottom: 25px;
 }
-
-.reports-stats-card {
+.reports-container .reports-stats-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -58,83 +55,78 @@
   border-radius: 12px;
   padding: 15px 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
-
-.reports-stats-card:hover {
+.reports-container .reports-stats-card:hover {
   background: #f1f5f9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
-
-.reports-stats-card h3 {
+.reports-container .reports-stats-card.active {
+  border: 2px solid #16a34a;
+  background: #ecfdf5;
+  transform: scale(1.02);
+}
+.reports-container .reports-stats-card h3 {
   font-size: 1.3rem;
   margin: 0;
 }
-
-.reports-stats-card p {
+.reports-container .reports-stats-card p {
   font-size: 0.9rem;
   color: #666;
   margin: 0;
 }
-
-.reports-stats-card .icon {
+.reports-container .reports-stats-card .icon {
   width: 28px;
   height: 28px;
 }
 
 /* Colores por tarjeta */
-.reports-stats-card.ventas h3,
-.reports-stats-card.ventas .icon {
-  color: #16a34a;
-}
-
-.reports-stats-card.facturas h3,
-.reports-stats-card.facturas .icon {
-  color: #2563eb;
-}
-
-.reports-stats-card.promedio h3,
-.reports-stats-card.promedio .icon {
-  color: #9333ea;
-}
-
-.reports-stats-card.agotados h3,
-.reports-stats-card.agotados .icon {
-  color: #f97316;
-}
+.reports-container .reports-stats-card.ventas h3,
+.reports-container .reports-stats-card.ventas .icon { color: #16a34a; }
+.reports-container .reports-stats-card.facturas h3,
+.reports-container .reports-stats-card.facturas .icon { color: #2563eb; }
+.reports-container .reports-stats-card.promedio h3,
+.reports-container .reports-stats-card.promedio .icon { color: #9333ea; }
+.reports-container .reports-stats-card.agotados h3,
+.reports-container .reports-stats-card.agotados .icon { color: #f97316; }
 
 /* Panel inferior */
-.reports-grid {
+.reports-container .reports-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 25px;
 }
-
-.reports-card {
+.reports-container .reports-card {
   background: #fff;
   border: 1px solid #eee;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
-
-.reports-card-header {
+.reports-container .reports-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
 }
-
-.reports-card-header h2 {
+.reports-container .reports-card-header h2 {
   font-size: 1.2rem;
   font-weight: bold;
 }
 
-.export-buttons {
+/* === Botones de exportación: a la par, sin scroll === */
+.reports-container .export-buttons {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;      /* siempre en línea */
+  white-space: nowrap;    /* evita salto por el texto */
+  overflow: visible;      /* sin scroll */
 }
 
-.btn-excel {
+/* Botones base */
+.reports-container .btn-excel {
   background: #16a34a;
   color: white;
   border: none;
@@ -142,13 +134,11 @@
   padding: 6px 12px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
-.btn-excel:hover {
-  background: #15803d;
-}
+.reports-container .btn-excel:hover { background: #15803d; transform: scale(1.05); }
 
-.btn-pdf {
+.reports-container .btn-pdf {
   background: #dc2626;
   color: white;
   border: none;
@@ -156,63 +146,100 @@
   padding: 6px 12px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
-.btn-pdf:hover {
-  background: #b91c1c;
+.reports-container .btn-pdf:hover { background: #b91c1c; transform: scale(1.05); }
+
+/* Botones modernos (generales) */
+.reports-container .btn-modern {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;       /* no se estiran */
+}
+.reports-container .btn-modern.excel {
+  background: linear-gradient(135deg, #34a853, #0c8c37);
+  color: white;
+}
+.reports-container .btn-modern.pdf {
+  background: linear-gradient(135deg, #d32f2f, #9a0007);
+  color: white;
+}
+.reports-container .btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
-/* Listas */
-.reports-sales-list {
+/* === SOLO Citas: mantiene el tamaño compacto que definiste === */
+.reports-container .export-buttons--citas .btn-modern {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  display: inline-flex;
+  width: auto;
+  min-width: unset;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Listas / barras */
+.reports-container .reports-sales-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-
-.reports-sales-item {
+.reports-container .reports-sales-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow: hidden;
+  word-wrap: break-word;
 }
-
-.reports-bar-container {
+.reports-container .reports-bar-container {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
 }
-
-.reports-bar {
+.reports-container .reports-bar {
   height: 10px;
   background: #16a34a;
   border-radius: 5px;
-  flex-shrink: 0;
+  flex-grow: 1;
   max-width: 100%;
+  transition: width 0.4s ease-in-out;
+  overflow: hidden;
 }
-
-.reports-value {
+.reports-container .reports-value {
   font-size: 0.9rem;
   color: #333;
+  white-space: nowrap;
 }
 
-.reports-inventory-list {
+/* Inventario */
+.reports-container .reports-inventory-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-
-.reports-inventory-item {
+.reports-container .reports-inventory-item {
   display: flex;
   justify-content: space-between;
   font-size: 1rem;
   border-bottom: 1px solid #f0f0f0;
   padding-bottom: 6px;
 }
+.reports-container .reports-inventory-item strong { color: #222; }
 
-.reports-inventory-item strong {
-  color: #222;
-}
-
-.reports-tag {
+/* Citas y Stock */
+.reports-container .reports-tag {
   display: inline-block;
   padding: 3px 8px;
   background: #e7f5ff;
@@ -221,14 +248,16 @@
   border-radius: 6px;
   margin-right: 6px;
 }
+.reports-container .reports-tag.programada { background: #dcfce7; color: #166534; }
+.reports-container .reports-tag.cancelada { background: #fee2e2; color: #991b1b; }
+.reports-container .reports-tag.completada { background: #e0f2fe; color: #0369a1; }
 
-.reports-low-stock-list {
+.reports-container .reports-low-stock-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-
-.reports-low-stock-item {
+.reports-container .reports-low-stock-item {
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
@@ -236,7 +265,7 @@
 }
 
 /* No permisos */
-.reports-no-permissions {
+.reports-container .reports-no-permissions {
   padding: 20px;
   text-align: center;
   color: #b91c1c;
@@ -246,18 +275,74 @@
   font-weight: 500;
 }
 
-/* Responsivo */
+/* ===== MODAL ===== */
+.reports-container .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: reportsFadeIn 0.4s ease forwards; /* nombre único */
+}
+.reports-container .modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 600px;
+  min-height: 220px;       /* evita que se vea como una “línea” */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.reports-container .modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* Cierre suave */
+.reports-container .modal-overlay.closing {
+  animation: reportsFadeOut 0.4s ease forwards; /* nombre único */
+}
+.reports-container .smooth-modal { transition: opacity .3s ease, transform .3s ease; }
+.reports-container .modal-overlay:not(.closing) .smooth-modal { opacity: 1; transform: translateY(0); }
+.reports-container .modal-overlay.closing .smooth-modal { opacity: 0; transform: translateY(8px); }
+
+/* Animaciones con nombres únicos al scope */
+@keyframes reportsFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes reportsFadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.98); }
+}
+
+/* Responsivo (si quisieras permitir salto en pantallas muy chicas)
+@media (max-width: 480px) {
+  .reports-container .export-buttons { flex-wrap: wrap; }
+}
+*/
+
 @media (max-width: 768px) {
-  .reports-header {
+  .reports-container .reports-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  .reports-date-picker {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  .reports-grid {
-    grid-template-columns: 1fr;
-  }
+  .reports-container .reports-date-picker { width: 100%; justify-content: flex-start; }
+  .reports-container .reports-grid { grid-template-columns: 1fr; }
 }
+
+
+
