@@ -1,5 +1,5 @@
 // src/components/Mascotas.js
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FaEdit,
   FaTrash,
@@ -10,58 +10,25 @@ import {
   FaPalette,
   FaSearch,
 } from "react-icons/fa";
+import { getPets, createPet, updatePet, deletePet } from "../apis/petsApi";
+import { getOwners } from "../apis/ownersApi";
 import "../CSS/Mascotas.css";
 
 const Mascotas = () => {
-  // ---- Datos de ejemplo ----
-  const [mascotas, setMascotas] = useState([
-    {
-      id: 1,
-      nombre: "Máximo",
-      especie: "Perro",
-      raza: "Labrador",
-      dueño: "Juan Pérez",
-      nacimiento: "2020-05-15",
-      peso: 25.5,
-      color: "Dorado",
-    },
-    {
-      id: 2,
-      nombre: "Legolas",
-      especie: "Perro",
-      raza: "Pitbull",
-      dueño: "José David Martínez Ardón",
-      nacimiento: "2021-07-10",
-      peso: 35,
-      color: "Café",
-    },
-  ]);
-
-  // ---- Dueños (para el select del modal) ----
-  const [dueños] = useState([
-    "Juan Pérez",
-    "José David Martínez Ardón",
-    "Carlos López",
-    "María Hernández",
-    "Freddy Leonel Montecinos",
-  ]);
+  // ---- Datos desde API ----
+  const [mascotas, setMascotas] = useState([]);
+  const [dueños, setDueños] = useState([]);
 
   // ---- Buscador ----
   const [search, setSearch] = useState("");
-  const normalize = (s) =>
-    (s ?? "")
-      .toString()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "");
 
   const filteredMascotas = useMemo(() => {
-    const q = normalize(search.trim());
+    const q = search.trim().toLowerCase();
     if (!q) return mascotas;
     return mascotas.filter((m) =>
-      [m.nombre, m.especie, m.raza, m.dueño, m.color].some((f) =>
-        normalize(f).includes(q)
-      )
+      [m.nombre, m.especie, m.raza, m.color, m?.ownerId?.full_name]
+        .filter(Boolean)
+        .some((f) => f.toLowerCase().includes(q))
     );
   }, [search, mascotas]);
 
@@ -76,15 +43,19 @@ const Mascotas = () => {
   const [closingDelete, setClosingDelete] = useState(false);
   const [mascotaAEliminar, setMascotaAEliminar] = useState(null);
 
-  // ---- Form ----
+  // ---- Modal de notificación (Éxito/Error) ----
+  const [alert, setAlert] = useState(null); // { type: 'success' | 'error', message: string }
+
+  // ---- Form ---- (usar nombres en español, como tu backend)
   const [nuevaMascota, setNuevaMascota] = useState({
     nombre: "",
     especie: "",
     raza: "",
-    dueño: "",
     nacimiento: "",
+    sexo: "",
     peso: "",
     color: "",
+    ownerId: "",
   });
 
   const handleChange = (e) => {
@@ -92,21 +63,27 @@ const Mascotas = () => {
     setNuevaMascota((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault(); // Evita recarga
-    if (modoEdicion) {
-      setMascotas((prev) =>
-        prev.map((m) =>
-          m.id === mascotaEditando.id ? { ...nuevaMascota, id: m.id } : m
-        )
-      );
-    } else {
-      setMascotas((prev) => [...prev, { ...nuevaMascota, id: Date.now() }]);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (modoEdicion) {
+        const resp = await updatePet(mascotaEditando._id, nuevaMascota); // { mensaje, pet }
+        setMascotas((prev) =>
+          prev.map((m) => (m._id === resp.pet._id ? resp.pet : m))
+        );
+        setAlert({ type: "success", message: "Mascota actualizada correctamente" });
+      } else {
+        const resp = await createPet(nuevaMascota); // { mensaje, mascota }
+        setMascotas((prev) => [...prev, resp.mascota]);
+        setAlert({ type: "success", message: "Mascota registrada correctamente" });
+      }
+      cerrarModalPrincipal();
+    } catch (err) {
+      setAlert({ type: "error", message: err.message || "Error guardando mascota" });
     }
-    cerrarModalPrincipal();
   };
 
-  // ---- Abrir/Cerrar modales con animación ----
+  // ---- Abrir/Cerrar modales ----
   const abrirModalNueva = () => {
     setModoEdicion(false);
     setMascotaEditando(null);
@@ -114,10 +91,11 @@ const Mascotas = () => {
       nombre: "",
       especie: "",
       raza: "",
-      dueño: "",
       nacimiento: "",
+      sexo: "",
       peso: "",
       color: "",
+      ownerId: "",
     });
     setClosingMain(false);
     setShowModal(true);
@@ -126,7 +104,18 @@ const Mascotas = () => {
   const abrirModalEditar = (mascota) => {
     setModoEdicion(true);
     setMascotaEditando(mascota);
-    setNuevaMascota(mascota);
+    setNuevaMascota({
+      nombre: mascota.nombre,
+      especie: mascota.especie,
+      raza: mascota.raza,
+      nacimiento: mascota.nacimiento
+        ? mascota.nacimiento.substring(0, 10)
+        : "",
+      sexo: mascota.sexo || "",
+      peso: mascota.peso ?? "",
+      color: mascota.color || "",
+      ownerId: mascota?.ownerId?._id || "",
+    });
     setClosingMain(false);
     setShowModal(true);
   };
@@ -154,10 +143,34 @@ const Mascotas = () => {
     }, 250);
   };
 
-  const confirmarEliminar = () => {
-    setMascotas((prev) => prev.filter((m) => m.id !== mascotaAEliminar.id));
-    closeDeleteModal();
+  const confirmarEliminar = async () => {
+    try {
+      await deletePet(mascotaAEliminar._id);
+      setMascotas((prev) =>
+        prev.filter((m) => m._id !== mascotaAEliminar._id)
+      );
+      setAlert({ type: "success", message: "Mascota eliminada correctamente" });
+      closeDeleteModal();
+    } catch (err) {
+      setAlert({ type: "error", message: err.message || "Error eliminando mascota" });
+    }
   };
+
+  // ---- Cargar datos desde API ----
+  useEffect(() => {
+    (async () => {
+      try {
+        const [mascotasData, ownersData] = await Promise.all([
+          getPets(),
+          getOwners(),
+        ]);
+        setMascotas(mascotasData);
+        setDueños(ownersData);
+      } catch (err) {
+        setAlert({ type: "error", message: "Error cargando datos iniciales" });
+      }
+    })();
+  }, []);
 
   return (
     <div className="mascotas-container">
@@ -193,7 +206,7 @@ const Mascotas = () => {
       {/* Grid de tarjetas */}
       <div className="mascotas-grid">
         {filteredMascotas.map((mascota) => (
-          <div className="mascota-card" key={mascota.id}>
+          <div className="mascota-card" key={mascota._id}>
             <div className="card-actions">
               <FaEdit
                 className="icon edit"
@@ -218,16 +231,19 @@ const Mascotas = () => {
             </div>
 
             <p>
-              <FaUser /> Dueño: {mascota.dueño}
+              <FaUser /> Dueño: {mascota?.ownerId?.full_name || "Sin dueño"}
             </p>
             <p>
-              <FaCalendarAlt /> Fecha de Nacimiento: {mascota.nacimiento}
+              <FaCalendarAlt /> Nacimiento:{" "}
+              {mascota.nacimiento
+                ? mascota.nacimiento.substring(0, 10).split("-").reverse().join("/")
+                : "No registrado"}
             </p>
             <p>
-              <FaWeight /> Peso: {mascota.peso} kg
+              <FaWeight /> Peso: {mascota.peso ?? 0} kg
             </p>
             <p>
-              <FaPalette className="palette-icon" /> Color: {mascota.color}
+              <FaPalette className="palette-icon" /> Color: {mascota.color || "-"}
             </p>
           </div>
         ))}
@@ -257,7 +273,7 @@ const Mascotas = () => {
 
             <form className="modal-form" onSubmit={handleSubmit}>
               <label>
-                Nombre 
+                Nombre
                 <input
                   type="text"
                   name="nombre"
@@ -268,17 +284,17 @@ const Mascotas = () => {
               </label>
 
               <label>
-                Dueño 
+                Dueño
                 <select
-                  name="dueño"
-                  value={nuevaMascota.dueño}
+                  name="ownerId"
+                  value={nuevaMascota.ownerId}
                   onChange={handleChange}
                   required
                 >
                   <option value="">Seleccionar dueño</option>
                   {dueños.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
+                    <option key={d._id} value={d._id}>
+                      {d.full_name}
                     </option>
                   ))}
                 </select>
@@ -290,6 +306,7 @@ const Mascotas = () => {
                   name="especie"
                   value={nuevaMascota.especie}
                   onChange={handleChange}
+                  required
                 >
                   <option value="">Seleccionar especie</option>
                   <option value="Perro">Perro</option>
@@ -322,6 +339,20 @@ const Mascotas = () => {
                   value={nuevaMascota.nacimiento}
                   onChange={handleChange}
                 />
+              </label>
+
+              <label>
+                Sexo
+                <select
+                  name="sexo"
+                  value={nuevaMascota.sexo}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Seleccionar sexo</option>
+                  <option value="Macho">Macho</option>
+                  <option value="Hembra">Hembra</option>
+                </select>
               </label>
 
               <label>
@@ -386,6 +417,26 @@ const Mascotas = () => {
               </button>
               <button className="btn-guardar" onClick={confirmarEliminar}>
                 Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Notificación (Éxito/Error) */}
+      {alert && (
+        <div
+          className="modal-overlay active"
+          onMouseDown={(e) => {
+            if (e.target.classList.contains("modal-overlay")) setAlert(null);
+          }}
+        >
+          <div className="modal active" role="alertdialog" aria-modal="true">
+            <h3>{alert.type === "success" ? "Éxito" : "Error"}</h3>
+            <p>{alert.message}</p>
+            <div className="modal-actions">
+              <button className="btn-guardar" onClick={() => setAlert(null)}>
+                Aceptar
               </button>
             </div>
           </div>
