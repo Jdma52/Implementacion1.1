@@ -356,7 +356,7 @@
   gap: 10px;
 }
 .mascotas-container .btn-cancelar {
-  background: #e5e7eb;
+  background: #e40b0b;
   padding: 8px 14px;
   border-radius: 14px;
   border: none;
@@ -365,11 +365,11 @@
 }
 .mascotas-container .btn-cancelar:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 10px rgba(107, 114, 128, 0.3);
+  box-shadow: 0 0 10px rgb(252, 0, 0);
 }
 .mascotas-container .btn-guardar {
   background: #00a884;
-  color: #fff;
+  color: #ffffff;
   padding: 8px 14px;
   border-radius: 14px;
   border: none;
@@ -379,7 +379,7 @@
 .mascotas-container .btn-guardar:hover {
   background: #059669;
   transform: scale(1.05);
-  box-shadow: 0 0 12px rgba(0, 168, 132, 0.5);
+  box-shadow: 0 0 12px rgb(0, 255, 200);
 }
 
 /* ==========================================================
