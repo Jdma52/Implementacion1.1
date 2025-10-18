@@ -1,10 +1,34 @@
-// src/components/Users.js
-import React, { useState, useEffect } from "react";
-import { Plus, Search, Edit, Trash2, User, Mail,
-  Shield, Eye, EyeOff, ShieldCheck, Stethoscope,
-  FlaskConical, Package, Users as UsersIcon } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  User,
+  Mail,
+  Shield,
+  Eye,
+  EyeOff,
+  Users as UsersIcon,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import "../CSS/Users.css";
-import { getUsers, createUser, updateUser, deleteUser, toggleUserStatus } from "../apis/usersApi";
+import {
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  toggleUserStatus,
+  resetPassword,
+} from "../apis/usersApi";
+
+// Íconos locales
+import EscudoIcon from "../assets/icons/escudo-de-seguridad.png";
+import EstetoscopioIcon from "../assets/icons/estetoscopio.png";
+import QuimicoIcon from "../assets/icons/quimico.png";
+import InventarioIcon from "../assets/icons/inventario.png";
+import RecepcionIcon from "../assets/icons/recepcionista.png";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -13,6 +37,8 @@ const Users = () => {
   const [isClosing, setIsClosing] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [toast, setToast] = useState(null);
+
   const [formData, setFormData] = useState({
     username: "",
     full_name: "",
@@ -24,77 +50,61 @@ const Users = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isClosingConfirm, setIsClosingConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [previewRole, setPreviewRole] = useState(null);
 
   const roles = [
-    {
-      value: "admin",
-      label: "Administradores",
-      color: "#ef4444",
-      icon: <ShieldCheck size={20} />,
-    },
-    {
-      value: "veterinario",
-      label: "Doctores",
-      color: "#3b82f6",
-      icon: <Stethoscope size={20} />,
-    },
-    {
-      value: "laboratorio",
-      label: "Laboratorio",
-      color: "#8b5cf6",
-      icon: <FlaskConical size={20} />,
-    },
-    {
-      value: "farmacia",
-      label: "Personal de Inventario",
-      color: "#10b981",
-      icon: <Package size={20} />,
-    },
-    {
-      value: "recepcion",
-      label: "Recepción",
-      color: "#f97316",
-      icon: <UsersIcon size={20} />,
-    },
+    { value: "admin", label: "Administradores", color: "#ef4444", icon: EscudoIcon },
+    { value: "veterinario", label: "Doctores", color: "#3b82f6", icon: EstetoscopioIcon },
+    { value: "laboratorio", label: "Laboratorio", color: "#8b5cf6", icon: QuimicoIcon },
+    { value: "farmacia", label: "Personal de Inventario", color: "#10b981", icon: InventarioIcon },
+    { value: "recepcion", label: "Recepción", color: "#f97316", icon: RecepcionIcon },
   ];
 
-  // === CARGAR USUARIOS DEL BACKEND ===
-  useEffect(() => {
-    loadUsers();
+  // === TOAST ===
+  const showToast = useCallback((message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const loadUsers = async () => {
+  // === CARGAR USUARIOS ===
+  const loadUsers = useCallback(async () => {
     try {
       const data = await getUsers();
       setUsers(data);
     } catch (err) {
       console.error("Error cargando usuarios:", err);
+      showToast("Error al cargar usuarios", "error");
     }
-  };
+  }, [showToast]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]); // ✅ sin warnings
 
   // === CREAR / EDITAR ===
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
-        username: formData.username,
-        full_name: formData.full_name,
-        email: formData.email,
-        role: formData.role,
-        password: formData.password,
-      };
-
       if (editingUser) {
-        if (!payload.password) delete payload.password;
-        await updateUser(editingUser._id, payload);
+        if (formData.password && formData.password.trim() !== "") {
+          await resetPassword(editingUser._id, formData.password);
+          showToast("Contraseña actualizada correctamente ✅");
+        }
+        await updateUser(editingUser._id, {
+          full_name: formData.full_name,
+          email: formData.email,
+          role: formData.role,
+        });
+        showToast("Usuario actualizado correctamente ✅");
       } else {
-        await createUser(payload);
+        await createUser(formData);
+        showToast("Usuario creado exitosamente ✅");
       }
-
       handleCloseModal();
       loadUsers();
     } catch (err) {
       console.error("Error guardando usuario:", err);
+      showToast("Error al guardar usuario ❌", "error");
     }
   };
 
@@ -121,13 +131,13 @@ const Users = () => {
     try {
       await deleteUser(userToDelete._id);
       closeConfirmModal();
+      showToast("Usuario eliminado correctamente ✅");
       loadUsers();
     } catch (err) {
       console.error("Error eliminando usuario:", err);
+      showToast("Error al eliminar usuario ❌", "error");
     }
   };
-
-  const cancelDelete = () => closeConfirmModal();
 
   const closeConfirmModal = () => {
     setIsClosingConfirm(true);
@@ -138,21 +148,21 @@ const Users = () => {
     }, 300);
   };
 
-  // === CAMBIAR ESTADO (ACTIVO/INACTIVO) ===
+  // === CAMBIAR ESTADO ===
   const handleToggleStatus = async (id) => {
     try {
       const updated = await toggleUserStatus(id);
-      setUsers(
-        users.map((u) =>
-          u._id === id ? { ...u, is_active: updated.is_active } : u
-        )
+      setUsers((prev) =>
+        prev.map((u) => (u._id === id ? { ...u, is_active: updated.is_active } : u))
       );
+      showToast(`Usuario ${updated.is_active ? "activado" : "desactivado"} correctamente ✅`);
     } catch (err) {
       console.error("Error cambiando estado:", err);
+      showToast("Error al cambiar estado ❌", "error");
     }
   };
 
-  // === MODAL PRINCIPAL ===
+  // === CERRAR MODAL ===
   const handleCloseModal = () => {
     setIsClosing(true);
     setTimeout(() => {
@@ -177,7 +187,6 @@ const Users = () => {
       u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // === ESTILOS DE ROLES ===
   const getRoleStyle = (role) => {
     const foundRole = roles.find((r) => r.value === role);
     return foundRole
@@ -187,15 +196,21 @@ const Users = () => {
 
   return (
     <div className="users-container">
+      {/* Toast */}
+      {toast && (
+        <div className={`toast ${toast.type}`}>
+          {toast.type === "success" ? <CheckCircle size={18} /> : <XCircle size={18} />}
+          <span>{toast.message}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="users-header">
         <div>
           <h1 className="users-title">
             <UsersIcon size={22} /> Gestión de Usuarios
           </h1>
-          <p className="users-subtitle">
-            Administrar roles y permisos del personal
-          </p>
+          <p className="users-subtitle">Administrar roles y permisos del personal</p>
         </div>
         <button className="btn-primary" onClick={() => setShowModal(true)}>
           <Plus size={18} /> Nuevo Usuario
@@ -205,16 +220,22 @@ const Users = () => {
       {/* Estadísticas */}
       <div className="stats-grid">
         {roles.map((r) => (
-          <div className="stats-card" key={r.value}>
-            <div className="stats-icon" style={{ color: r.color }}>
-              {r.icon}
+          <div
+            className="stats-card"
+            key={r.value}
+            onClick={() => setPreviewRole(r)}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="stats-icon-circle"
+              style={{ background: `linear-gradient(135deg, ${r.color}33, ${r.color}99)` }}
+            >
+              <img src={r.icon} alt={r.label} className="stats-img" />
             </div>
-            <div>
-              <p className="stats-number">
-                {users.filter((u) => u.role === r.value).length}
-              </p>
-              <p className="stats-label">{r.label}</p>
-            </div>
+            <p className="stats-number">
+              {users.filter((u) => u.role === r.value).length}
+            </p>
+            <p className="stats-label">{r.label}</p>
           </div>
         ))}
       </div>
@@ -261,9 +282,7 @@ const Users = () => {
                 </td>
                 <td>
                   <button
-                    className={`status-btn ${
-                      u.is_active ? "active" : "inactive"
-                    }`}
+                    className={`status-btn ${u.is_active ? "active" : "inactive"}`}
                     onClick={() => handleToggleStatus(u._id)}
                   >
                     {u.is_active ? "Activo" : "Inactivo"}
@@ -271,16 +290,10 @@ const Users = () => {
                 </td>
                 <td>
                   <div className="action-buttons">
-                    <button
-                      className="action-btn edit"
-                      onClick={() => handleEdit(u)}
-                    >
+                    <button className="action-btn edit" onClick={() => handleEdit(u)}>
                       <Edit size={16} />
                     </button>
-                    <button
-                      className="action-btn delete"
-                      onClick={() => handleDeleteClick(u)}
-                    >
+                    <button className="action-btn delete" onClick={() => handleDeleteClick(u)}>
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -290,6 +303,44 @@ const Users = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Modal de roles */}
+      {previewRole && (
+        <div className="modal-overlay open">
+          <div className="modal open" style={{ maxWidth: "600px" }}>
+            <h2>Usuarios en {previewRole.label}</h2>
+            <div className="table-wrapper" style={{ maxHeight: "300px", overflowY: "auto" }}>
+              <table className="users-table">
+                <thead>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users
+                    .filter((u) => u.role === previewRole.value)
+                    .map((u) => (
+                      <tr key={u._id}>
+                        <td>@{u.username}</td>
+                        <td>{u.full_name}</td>
+                        <td>{u.email}</td>
+                        <td>{u.is_active ? "Activo" : "Inactivo"}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn-secondary" onClick={() => setPreviewRole(null)}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Nuevo/Editar */}
       {showModal && (
@@ -302,9 +353,7 @@ const Users = () => {
                 <input
                   type="text"
                   value={formData.username}
-                  onChange={(e) =>
-                    setFormData({ ...formData, username: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   required
                   disabled={!!editingUser}
                 />
@@ -314,9 +363,7 @@ const Users = () => {
                 <input
                   type="text"
                   value={formData.full_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, full_name: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                   required
                 />
               </div>
@@ -325,9 +372,7 @@ const Users = () => {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                 />
               </div>
@@ -335,9 +380,7 @@ const Users = () => {
                 <label>Rol</label>
                 <select
                   value={formData.role}
-                  onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   required
                 >
                   <option value="">Seleccionar rol</option>
@@ -353,25 +396,16 @@ const Users = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required={!editingUser}
                   minLength="6"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
+                <button type="button" onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={handleCloseModal}
-                >
+                <button type="button" className="btn-secondary" onClick={handleCloseModal}>
                   Cancelar
                 </button>
                 <button type="submit" className="btn-primary">
@@ -385,25 +419,15 @@ const Users = () => {
 
       {/* Modal Confirmación Eliminar */}
       {showConfirmModal && (
-        <div
-          className={`confirm-modal-overlay ${
-            isClosingConfirm ? "closing" : "open"
-          }`}
-        >
-          <div
-            className={`confirm-modal ${
-              isClosingConfirm ? "closing" : "open"
-            }`}
-          >
+        <div className={`confirm-modal-overlay ${isClosingConfirm ? "closing" : "open"}`}>
+          <div className={`confirm-modal ${isClosingConfirm ? "closing" : "open"}`}>
             <h3>¿Deseas eliminar este usuario?</h3>
-            <p style={{ textAlign: "center", marginBottom: "1rem" }}>
-              {userToDelete?.full_name}
-            </p>
+            <p style={{ textAlign: "center", marginBottom: "1rem" }}>{userToDelete?.full_name}</p>
             <div className="confirm-actions">
               <button className="confirm-btn" onClick={confirmDelete}>
                 Sí, Eliminar
               </button>
-              <button className="cancel-btn" onClick={cancelDelete}>
+              <button className="cancel-btn" onClick={closeConfirmModal}>
                 No
               </button>
             </div>
