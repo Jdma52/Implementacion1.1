@@ -1,5 +1,6 @@
 // src/components/Inventory.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Edit,
   Trash2,
@@ -30,7 +31,6 @@ const Inventory = () => {
   const [closingModal, setClosingModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
-  // Estados para modal eliminar
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [closingDeleteModal, setClosingDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -46,23 +46,33 @@ const Inventory = () => {
     expiryDate: "",
   });
 
+  const API_URL = "http://localhost:5000/api/products";
+
+  // 📌 Cargar productos al iniciar
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(API_URL);
+        setItems(res.data);
+      } catch (err) {
+        console.error("❌ Error cargando productos:", err.response?.data || err.message);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  // 📊 Métricas
   const totalProducts = items.length;
-  const stockLow = items.filter(
-    (i) => Number(i.quantity) <= Number(i.minStock)
-  ).length;
-  const expired = items.filter(
-    (i) => i.expiryDate && new Date(i.expiryDate) < new Date()
-  ).length;
+  const stockLow = items.filter((i) => Number(i.quantity) <= Number(i.minStock)).length;
+  const expired = items.filter((i) => i.expiryDate && new Date(i.expiryDate) < new Date()).length;
   const totalValue = items.reduce(
-    (sum, i) =>
-      sum + (parseFloat(i.price) || 0) * (Number(i.quantity) || 0),
+    (sum, i) => sum + (parseFloat(i.price) || 0) * (Number(i.quantity) || 0),
     0
   );
 
-  const filteredItems = items.filter((i) =>
-    i.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredItems = items.filter((i) => i.name?.toLowerCase().includes(search.toLowerCase()));
 
+  // 📌 Manejo formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -85,7 +95,7 @@ const Inventory = () => {
   };
 
   const handleEdit = (item) => {
-    setEditingId(item.id);
+    setEditingId(item._id);
     setForm({
       name: item.name ?? "",
       category: item.category ?? "",
@@ -93,8 +103,8 @@ const Inventory = () => {
       price: item.price != null ? String(item.price) : "",
       minStock: item.minStock != null ? String(item.minStock) : "",
       provider: item.provider ?? "",
-      purchaseDate: item.purchaseDate ?? "",
-      expiryDate: item.expiryDate ?? "",
+      purchaseDate: item.purchaseDate ? item.purchaseDate.substring(0, 10) : "",
+      expiryDate: item.expiryDate ? item.expiryDate.substring(0, 10) : "",
     });
     setShowModal(true);
     setClosingModal(false);
@@ -119,52 +129,57 @@ const Inventory = () => {
     }, 300);
   };
 
-  const handleSave = (e) => {
+  // 📌 Guardar producto (crear o actualizar)
+  const handleSave = async (e) => {
     e.preventDefault();
+    try {
+      const qStr = sanitizeIntegerString(String(form.quantity).trim());
+      const pStr = sanitizeFloatString(String(form.price).trim());
+      const msStr = sanitizeIntegerString(String(form.minStock).trim());
 
-    const qStr = sanitizeIntegerString(String(form.quantity).trim());
-    const pStr = sanitizeFloatString(String(form.price).trim());
-    const msStr = sanitizeIntegerString(String(form.minStock).trim());
-
-    const quantity = qStr === "" ? NaN : parseInt(qStr, 10);
-    const price = pStr === "" ? "" : pStr;
-    const minStock = msStr === "" ? NaN : parseInt(msStr, 10);
-
-    const payload = {
-      name: form.name.trim(),
-      category: form.category.trim(),
-      quantity,
-      price,
-      minStock,
-      provider: form.provider.trim() || "",
-      purchaseDate: form.purchaseDate || "",
-      expiryDate: form.expiryDate || "",
-    };
-
-    if (editingId) {
-      setItems((prev) =>
-        prev.map((it) => (it.id === editingId ? { ...it, ...payload } : it))
-      );
-      setEditingId(null);
-    } else {
-      const newItem = {
-        id: Date.now() + Math.floor(Math.random() * 1000),
-        ...payload,
+      const payload = {
+        name: form.name.trim(),
+        category: form.category.trim(),
+        quantity: qStr === "" ? 0 : parseInt(qStr, 10),
+        price: pStr === "" ? 0 : parseFloat(pStr),
+        minStock: msStr === "" ? 0 : parseInt(msStr, 10),
+        provider: form.provider.trim() || "",
+        purchaseDate: form.purchaseDate || null,
+        expiryDate: form.expiryDate || null,
       };
-      setItems((prev) => [...prev, newItem]);
+
+      if (editingId) {
+        await axios.put(`${API_URL}/${editingId}`, payload);
+      } else {
+        await axios.post(API_URL, payload);
+      }
+
+      const res = await axios.get(API_URL);
+      setItems(res.data);
+      handleCancel();
+    } catch (err) {
+      console.error("❌ Error guardando producto:", err.response?.data || err.message);
+      alert("Error guardando producto: " + (err.response?.data?.mensaje || err.message));
     }
-    handleCancel();
   };
 
+  // 📌 Eliminar producto
   const confirmDelete = (item) => {
     setItemToDelete(item);
     setShowDeleteModal(true);
     setClosingDeleteModal(false);
   };
 
-  const handleDeleteConfirmed = () => {
-    setItems((prev) => prev.filter((it) => it.id !== itemToDelete.id));
-    closeDeleteModal();
+  const handleDeleteConfirmed = async () => {
+    try {
+      await axios.delete(`${API_URL}/${itemToDelete._id}`);
+      const res = await axios.get(API_URL);
+      setItems(res.data);
+      closeDeleteModal();
+    } catch (err) {
+      console.error("❌ Error eliminando producto:", err.response?.data || err.message);
+      alert("Error eliminando producto: " + (err.response?.data?.mensaje || err.message));
+    }
   };
 
   const closeDeleteModal = () => {
@@ -260,14 +275,16 @@ const Inventory = () => {
                 const isExpired =
                   item.expiryDate && new Date(item.expiryDate) < new Date();
                 return (
-                  <tr key={item.id}>
+                  <tr key={item._id}>
                     <td>{item.name}</td>
                     <td>{item.category}</td>
                     <td>{item.quantity}</td>
                     <td>L. {parseFloat(item.price || 0).toFixed(2)}</td>
                     <td>{item.provider || "—"}</td>
                     <td className={isExpired ? "expired" : ""}>
-                      {item.expiryDate || "—"}
+                      {item.expiryDate
+                        ? item.expiryDate.substring(0, 10)
+                        : "—"}
                     </td>
                     <td>
                       {isExpired ? (
@@ -307,22 +324,13 @@ const Inventory = () => {
       {/* Modal Crear/Editar */}
       {showModal && (
         <div
-          className={`inventory-modal-overlay ${
-            closingModal ? "closing" : "active"
-          }`}
+          className={`inventory-modal-overlay ${closingModal ? "closing" : "active"}`}
           onClick={(e) =>
-            e.target.classList.contains("inventory-modal-overlay") &&
-            handleCancel()
+            e.target.classList.contains("inventory-modal-overlay") && handleCancel()
           }
         >
-          <div
-            className={`inventory-modal ${
-              closingModal ? "closing" : "active"
-            }`}
-          >
-            <h3>
-              {editingId ? "Editar producto" : "Registrar nuevo producto"}
-            </h3>
+          <div className={`inventory-modal ${closingModal ? "closing" : "active"}`}>
+            <h3>{editingId ? "Editar producto" : "Registrar nuevo producto"}</h3>
             <form className="modal-form" onSubmit={handleSave}>
               <div className="form-row">
                 <label>Nombre </label>
@@ -425,20 +433,15 @@ const Inventory = () => {
       {/* Modal Eliminar */}
       {showDeleteModal && (
         <div
-          className={`inventory-modal-overlay ${
-            closingDeleteModal ? "closing" : "active"
-          }`}
+          className={`inventory-modal-overlay ${closingDeleteModal ? "closing" : "active"}`}
         >
           <div
-            className={`inventory-delete-modal ${
-              closingDeleteModal ? "closing" : "active"
-            }`}
+            className={`inventory-delete-modal ${closingDeleteModal ? "closing" : "active"}`}
           >
             <h2>¿Eliminar producto?</h2>
             <p>
               ¿Estás seguro de que deseas eliminar el producto{" "}
-              <strong>{itemToDelete?.name}</strong>? Esta acción no se puede
-              deshacer.
+              <strong>{itemToDelete?.name}</strong>? Esta acción no se puede deshacer.
             </p>
             <div className="modal-actions">
               <button className="btn-danger" onClick={handleDeleteConfirmed}>
