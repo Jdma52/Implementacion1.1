@@ -1,7 +1,11 @@
+// backend/controllers/petController.js
 const Pet = require("../models/Pet");
 const Owner = require("../models/Owner");
 
-// 📌 GET /pets (listar mascotas con filtro opcional ?filter=)
+/* =====================================================
+   📦 GET /pets
+   Listar todas las mascotas (con filtro opcional)
+===================================================== */
 exports.getPets = async (req, res) => {
   try {
     const { filter } = req.query;
@@ -32,18 +36,47 @@ exports.getPets = async (req, res) => {
   }
 };
 
-// 📌 POST /pets (registrar nueva mascota)
+/* =====================================================
+   📦 GET /pets/by-owner/:id
+   Listar mascotas asociadas a un dueño específico
+===================================================== */
+exports.getPetsByOwner = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const owner = await Owner.findById(id);
+
+    if (!owner)
+      return res.status(404).json({ mensaje: "Dueño no encontrado" });
+
+    const pets = await Pet.find({ ownerId: id }).populate(
+      "ownerId",
+      "full_name email phone dni address"
+    );
+
+    res.json(pets);
+  } catch (err) {
+    res.status(500).json({
+      mensaje: "Error obteniendo mascotas del dueño",
+      error: err.message,
+    });
+  }
+};
+
+/* =====================================================
+   🐾 POST /pets
+   Registrar nueva mascota asociada a un dueño
+===================================================== */
 exports.createPet = async (req, res) => {
   try {
-    const { nombre, especie, raza, nacimiento, sexo, peso, color, ownerId } = req.body;
+    const { nombre, especie, raza, nacimiento, sexo, peso, color, ownerId } =
+      req.body;
 
-    // Validar dueño
+    // 🔹 Validar existencia del dueño
     const owner = await Owner.findById(ownerId);
-    if (!owner) {
+    if (!owner)
       return res.status(400).json({ mensaje: "Dueño no encontrado" });
-    }
 
-    // 🔹 Ajustar fecha para evitar desfase horario
+    // 🔹 Normalizar fecha de nacimiento
     let fechaNacimiento = nacimiento ? new Date(nacimiento) : null;
     if (fechaNacimiento) fechaNacimiento.setUTCHours(0, 0, 0, 0);
 
@@ -60,7 +93,6 @@ exports.createPet = async (req, res) => {
 
     await nuevaMascota.save();
 
-    // Devolver mascota con info del dueño
     const mascotaConDueño = await Pet.findById(nuevaMascota._id).populate(
       "ownerId",
       "full_name email phone dni address"
@@ -78,25 +110,27 @@ exports.createPet = async (req, res) => {
   }
 };
 
-// 📌 PUT /pets/:id (editar mascota)
+/* =====================================================
+   ✏️ PUT /pets/:id
+   Editar información de una mascota
+===================================================== */
 exports.updatePet = async (req, res) => {
   try {
     const { id } = req.params;
     const { ownerId, nacimiento } = req.body;
 
-    // Validar nuevo dueño si se cambia
+    // 🔹 Validar nuevo dueño si cambia
     if (ownerId) {
       const owner = await Owner.findById(ownerId);
-      if (!owner) {
+      if (!owner)
         return res.status(400).json({ mensaje: "Dueño no encontrado" });
-      }
     }
 
-    // 🔹 Normalizar fecha si viene en la petición
+    // 🔹 Normalizar fecha
     if (nacimiento) {
-      const fechaNacimiento = new Date(nacimiento);
-      fechaNacimiento.setUTCHours(0, 0, 0, 0);
-      req.body.nacimiento = fechaNacimiento;
+      const fecha = new Date(nacimiento);
+      fecha.setUTCHours(0, 0, 0, 0);
+      req.body.nacimiento = fecha;
     }
 
     const pet = await Pet.findByIdAndUpdate(id, req.body, { new: true }).populate(
@@ -104,7 +138,8 @@ exports.updatePet = async (req, res) => {
       "full_name email phone dni address"
     );
 
-    if (!pet) return res.status(404).json({ mensaje: "Mascota no encontrada" });
+    if (!pet)
+      return res.status(404).json({ mensaje: "Mascota no encontrada" });
 
     res.json({ mensaje: "Mascota actualizada correctamente", pet });
   } catch (err) {
@@ -115,13 +150,17 @@ exports.updatePet = async (req, res) => {
   }
 };
 
-// 📌 DELETE /pets/:id (eliminar mascota)
+/* =====================================================
+   🗑️ DELETE /pets/:id
+   Eliminar una mascota
+===================================================== */
 exports.deletePet = async (req, res) => {
   try {
     const { id } = req.params;
     const pet = await Pet.findByIdAndDelete(id);
 
-    if (!pet) return res.status(404).json({ mensaje: "Mascota no encontrada" });
+    if (!pet)
+      return res.status(404).json({ mensaje: "Mascota no encontrada" });
 
     res.json({ mensaje: "Mascota eliminada correctamente" });
   } catch (err) {
