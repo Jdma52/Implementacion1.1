@@ -1,6 +1,5 @@
 // src/components/Inventory.js
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import {
   Edit,
   Trash2,
@@ -10,6 +9,13 @@ import {
   Stethoscope,
 } from "lucide-react";
 import "../CSS/Inventory.css";
+
+import {
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "../apis/productsApi";
 
 const sanitizeIntegerString = (str) => {
   if (typeof str !== "string") return str;
@@ -46,31 +52,33 @@ const Inventory = () => {
     expiryDate: "",
   });
 
-  const API_URL = "http://localhost:5000/api/products";
-
   // 📌 Cargar productos al iniciar
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get(API_URL);
-        setItems(res.data);
+        const data = await getProducts();
+        setItems(data);
       } catch (err) {
-        console.error("❌ Error cargando productos:", err.response?.data || err.message);
+        console.error("❌ Error cargando productos:", err);
       }
     };
-    fetchProducts();
+    fetchData();
   }, []);
 
   // 📊 Métricas
   const totalProducts = items.length;
   const stockLow = items.filter((i) => Number(i.quantity) <= Number(i.minStock)).length;
-  const expired = items.filter((i) => i.expiryDate && new Date(i.expiryDate) < new Date()).length;
+  const expired = items.filter(
+    (i) => i.expiryDate && new Date(i.expiryDate) < new Date()
+  ).length;
   const totalValue = items.reduce(
     (sum, i) => sum + (parseFloat(i.price) || 0) * (Number(i.quantity) || 0),
     0
   );
 
-  const filteredItems = items.filter((i) => i.name?.toLowerCase().includes(search.toLowerCase()));
+  const filteredItems = items.filter((i) =>
+    i.name?.toLowerCase().includes(search.toLowerCase())
+  );
 
   // 📌 Manejo formulario
   const handleChange = (e) => {
@@ -149,17 +157,16 @@ const Inventory = () => {
       };
 
       if (editingId) {
-        await axios.put(`${API_URL}/${editingId}`, payload);
+        await updateProduct(editingId, payload);
       } else {
-        await axios.post(API_URL, payload);
+        await createProduct(payload);
       }
 
-      const res = await axios.get(API_URL);
-      setItems(res.data);
+      setItems(await getProducts());
       handleCancel();
     } catch (err) {
-      console.error("❌ Error guardando producto:", err.response?.data || err.message);
-      alert("Error guardando producto: " + (err.response?.data?.mensaje || err.message));
+      console.error("❌ Error guardando producto:", err);
+      alert("Error guardando producto: " + err.message);
     }
   };
 
@@ -172,13 +179,12 @@ const Inventory = () => {
 
   const handleDeleteConfirmed = async () => {
     try {
-      await axios.delete(`${API_URL}/${itemToDelete._id}`);
-      const res = await axios.get(API_URL);
-      setItems(res.data);
+      await deleteProduct(itemToDelete._id);
+      setItems(await getProducts());
       closeDeleteModal();
     } catch (err) {
-      console.error("❌ Error eliminando producto:", err.response?.data || err.message);
-      alert("Error eliminando producto: " + (err.response?.data?.mensaje || err.message));
+      console.error("❌ Error eliminando producto:", err);
+      alert("Error eliminando producto: " + err.message);
     }
   };
 
@@ -282,9 +288,7 @@ const Inventory = () => {
                     <td>L. {parseFloat(item.price || 0).toFixed(2)}</td>
                     <td>{item.provider || "—"}</td>
                     <td className={isExpired ? "expired" : ""}>
-                      {item.expiryDate
-                        ? item.expiryDate.substring(0, 10)
-                        : "—"}
+                      {item.expiryDate ? item.expiryDate.substring(0, 10) : "—"}
                     </td>
                     <td>
                       {isExpired ? (
@@ -334,21 +338,11 @@ const Inventory = () => {
             <form className="modal-form" onSubmit={handleSave}>
               <div className="form-row">
                 <label>Nombre </label>
-                <input
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                />
+                <input name="name" value={form.name} onChange={handleChange} required />
               </div>
               <div className="form-row">
                 <label>Categoría </label>
-                <input
-                  name="category"
-                  value={form.category}
-                  onChange={handleChange}
-                  required
-                />
+                <input name="category" value={form.category} onChange={handleChange} required />
               </div>
               <div className="form-row">
                 <label>Cantidad </label>
@@ -389,11 +383,7 @@ const Inventory = () => {
               </div>
               <div className="form-row">
                 <label>Proveedor</label>
-                <input
-                  name="provider"
-                  value={form.provider}
-                  onChange={handleChange}
-                />
+                <input name="provider" value={form.provider} onChange={handleChange} />
               </div>
               <div className="form-row">
                 <label>Fecha de compra</label>
@@ -459,3 +449,4 @@ const Inventory = () => {
 };
 
 export default Inventory;
+
