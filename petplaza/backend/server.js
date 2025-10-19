@@ -1,43 +1,56 @@
 // backend/server.js
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const path = require('path');
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const path = require("path");
 
-const authRoutes = require('./routes/auth');
-const productRoutes = require("./routes/products");
+// 📦 Rutas
+const authRoutes = require("./routes/auth");
+const userRoutes = require("./routes/users");
+const ownerRoutes = require("./routes/owners");
+const petRoutes = require("./routes/pets"); // 👈 RUTA ACTUALIZADA
+const appointmentRoutes = require("./routes/appointments");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+/* =====================================================
+   🌐 Middleware global
+===================================================== */
 app.use(cors());
 app.use(express.json());
 
-// Conexión a MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('✅ MongoDB conectado'))
-.catch((err) => console.error('❌ Error conectando a MongoDB:', err));
+/* =====================================================
+   💾 Conexión a MongoDB
+===================================================== */
+mongoose.set("strictQuery", true); // 🔹 Recomendado para versiones recientes
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("✅ MongoDB conectado correctamente"))
+  .catch((err) =>
+    console.error("❌ Error conectando a MongoDB:", err.message)
+  );
 
-// Ruta de prueba
-app.get('/api', (req, res) => {
-    res.json({ ok: true, msg: 'Backend funcionando correctamente' });
+/* =====================================================
+   🚦 Rutas principales
+===================================================== */
+app.get("/api", (req, res) => {
+  res.json({ ok: true, msg: "Backend funcionando correctamente" });
 });
 
-// Rutas API
-app.get('/api', (req, res) => {
-  res.json({ ok: true, msg: 'Backend funcionando correctamente' });
-});
-app.use('/api/auth', authRoutes);
-const userRoutes = require("./routes/users");
+// 🔹 Rutas API
+app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/owners", ownerRoutes);
+app.use("/api/pets", petRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
 /* 
-// NO BORRAR ESTO SIRVE PARA EL DESPLIEGUE -DEPLOYD EN RENDER
+// NO BORRAR ESTO SIRVE PARA EL DESPLIEGUE -DEPLOY EN RENDER
 // ======= Servir FRONTEND (CRA) en PRODUCCIÓN =======
 if (process.env.NODE_ENV === 'production') {
   const FE_DIR = path.join(__dirname, 'build'); // CRA
@@ -51,7 +64,9 @@ if (process.env.NODE_ENV === 'production') {
 }
 */
 
-// Iniciar servidor
+/* =====================================================
+   🚀 Iniciar servidor
+===================================================== */
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
