@@ -16,7 +16,7 @@
   overflow: hidden;
 }
 
-/* Animación */
+
 .dashboard-module .fade-in {
   opacity: 0;
   transform: translateY(10px);
@@ -28,7 +28,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Header (Bienvenido…) */
+
 .dashboard-module .dashboard-header {
   margin-top: -45px;     
   margin-bottom: 1rem;
@@ -46,7 +46,7 @@
   font-size: 0.95rem;
 }
 
-/* Grid de tarjetas pequeñas */
+
 .dashboard-module .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
@@ -87,7 +87,7 @@
 .dashboard-module .bg-purple { background: linear-gradient(#f59e0b); }
 .dashboard-module .bg-red { background: linear-gradient(135deg, #EF4444, #F87171); }
 
-/* Contenedor de listas */
+
 .dashboard-module .lists-grid {
   flex: 1;                          
   display: flex;
@@ -99,7 +99,7 @@
   margin-bottom: 5rem; 
 }
 
-/* Tarjetas de listas */
+
 .dashboard-module .card {
   background: #fff;
   padding: 1rem; 
@@ -117,7 +117,7 @@
   box-shadow: 0 8px 16px rgba(0,0,0,0.12);
 }
 
-/* Título de cada lista */
+
 .dashboard-module .card h2 {
   margin-bottom: 1rem;
   font-size: 1.5rem;
@@ -125,7 +125,7 @@
   text-align: left;
 }
 
-/* Lista dentro de la tarjeta */
+
 .dashboard-module .card ul {
   flex-grow: 1; 
   overflow: hidden;             
@@ -134,7 +134,7 @@
   width: 100%;
 }
 
-/* Items de la lista */
+
 .dashboard-module .list-item {
   display: flex;
   align-items: center;
@@ -149,7 +149,7 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
-/* Texto dentro de la lista */
+
 .dashboard-module .list-item div {
   pointer-events: auto;
   width: calc(100% - 28px); 
@@ -162,7 +162,7 @@
   font-size: 1.05rem; 
 }
 
-/* Íconos de la lista */
+
 .dashboard-module .list-icon {
   margin-right: 10px; 
   min-width: 24px;
@@ -177,7 +177,7 @@
 .dashboard-module .list-icon.bg-blue { background: #6366F1; }
 .dashboard-module .list-icon.bg-red { background: #EF4444; }
 
-/*Scroll*/
+
 .dashboard-module .card ul::-webkit-scrollbar {
   display: none;
 }
@@ -192,4 +192,29 @@
     max-width: 90%; 
     min-height: auto;
   }
+}
+
+
+.spinner {
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top: 3px solid #6366F1; /* color del spinner */
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.list-spinner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
