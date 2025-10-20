@@ -91,6 +91,75 @@
 }
 
 /* ================================
+   SUBCUADRO CITAS DE HOY
+================================ */
+.citas-hoy-card {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  max-width: 400px;
+}
+
+.citas-hoy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.citas-hoy-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.citas-hoy-list {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.cita-hoy-item {
+  padding: 6px 4px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cita-hoy-item:hover {
+  background-color: #e6f7ff;
+  border-radius: 4px;
+}
+
+.cita-hoy-item .hora {
+  font-weight: 500;
+  color: #374151;
+}
+
+.cita-hoy-item .dueno {
+  font-weight: 500;
+  color: #1e40af;
+}
+
+.cita-hoy-item .mascota {
+  font-weight: 400;
+  color: #4b5563;
+}
+
+.btn-ver-todas {
+  background: none;
+  border: none;
+  color: #2196f3;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 6px;
+}
+
+/* ================================
    TABLA
 ================================ */
 .citas-table {
@@ -337,5 +406,8 @@ td.acciones .btn-eliminar:hover {
   .btn-nueva-cita {
     width: 100%;
     padding: 10px;
+  }
+  .citas-hoy-card {
+    max-width: 100%;
   }
 }
