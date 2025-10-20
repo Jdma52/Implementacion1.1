@@ -6,7 +6,6 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import "../CSS/Reports.css";
 
-// Asegúrate de que estas rutas de assets sean correctas en tu proyecto
 // Logo
 import petplazaLogo from "../assets/LogoReports.jpeg";
 
@@ -65,7 +64,7 @@ const Reports = ({ user }) => {
   useEffect(() => {
     // Convierte el asset de imagen a DataURL para que jspdf pueda usarlo
     const img = new Image();
-    img.crossOrigin = "Anonymous"; // Necesario para evitar problemas de CORS si la imagen viene de otro dominio, aunque en assets locales no debería ser un problema.
+    img.crossOrigin = "Anonymous"; // Evita problemas de CORS si fuese remoto
     img.src = petplazaLogo;
     img.onload = () => {
       const canvas = document.createElement("canvas");
@@ -76,28 +75,33 @@ const Reports = ({ user }) => {
       setLogoDataURL(canvas.toDataURL("image/jpeg")); // O "image/png" si el logo es PNG
     };
     img.onerror = (err) => {
-        console.error("Error al cargar el logo:", err);
-        setLogoDataURL(null); // Asegura que no se intente usar un logo fallido
+      console.error("Error al cargar el logo:", err);
+      setLogoDataURL(null);
     };
   }, []);
 
   // Función para exportar datos a Excel
   const exportToExcel = (data, fileName, sheetName) => {
-    // Mapeo simple de datos, asume que 'data' es un array de objetos
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     XLSX.writeFile(workbook, `${fileName}.xlsx`);
   };
 
-  // Función para exportar datos a PDF
-  const exportToPDF = (data, fileName, columns) => {
+  /**
+   * Función para exportar datos a PDF
+   * @param {Array<Array<any>>} data - Matriz de filas (ya mapeadas)
+   * @param {string} fileName - Nombre del archivo
+   * @param {Array<string>} columns - Encabezados
+   * @param {Object} options - { currency: boolean } Si true, formatea números como Lempiras
+   */
+  const exportToPDF = (data, fileName, columns, options = { currency: true }) => {
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text(fileName, 14, 15);
 
-    const LOGO_MAX_W_MM = 42; // Ancho máximo del logo en mm
-    const LOGO_WIDTH_FRACTION = 0.3; // Ancho del logo como fracción del ancho de la página
+    const LOGO_MAX_W_MM = 42;
+    const LOGO_WIDTH_FRACTION = 0.3;
 
     let startY = 25; // Posición de inicio de la tabla
     let logoLayout = null;
@@ -105,17 +109,15 @@ const Reports = ({ user }) => {
     // Lógica para añadir el logo en la esquina superior derecha
     if (logoDataURL) {
       const pageWidth = doc.internal.pageSize.getWidth();
-      
-      // Obtener propiedades de la imagen (solo funciona después de que el useEffect la cargue)
-      // Se añade un try-catch para manejar el caso de error o si no se ha cargado.
+
       let props;
       try {
-          props = doc.getImageProperties(logoDataURL);
+        props = doc.getImageProperties(logoDataURL);
       } catch (e) {
-          console.error("No se pudieron obtener las propiedades del logo. ¿Está el logo cargado correctamente?", e);
-          props = { width: 1, height: 1 }; // Fallback para evitar errores
+        console.error("No se pudieron obtener las propiedades del logo:", e);
+        props = { width: 1, height: 1 };
       }
-      
+
       const aspect = props.height / props.width;
 
       const targetWmm = Math.min(LOGO_MAX_W_MM, pageWidth * LOGO_WIDTH_FRACTION);
@@ -125,41 +127,45 @@ const Reports = ({ user }) => {
       const marginRight = 10;
 
       logoLayout = { pageWidth, logoW: targetWmm, logoH: targetHmm, marginTop, marginRight };
-      // Ajusta la posición inicial de la tabla para que no se superponga con el logo
       startY = Math.max(startY, marginTop + targetHmm + 12);
     }
 
-    // Formatear los valores numéricos (asume que los valores a formatear son números en la segunda columna de las filas de datos)
+    // Formatear números en Lempiras solo si options.currency === true
     const formattedData = data.map((row) =>
-      row.map((value, index) => {
-        // Asume que los totales y valores monetarios son los que necesitan formato.
-        // Se aplica si es el último elemento y es un número, o si la columna es de tipo moneda
-        // En este mock se asume que los números en las columnas son valores L.
-        if (typeof value === "number") {
+      row.map((value) => {
+        if (typeof value === "number" && options.currency) {
           return new Intl.NumberFormat("es-HN", {
             style: "currency",
-            currency: "HNL", // Moneda de Honduras: Lempira
+            currency: "HNL",
           }).format(value);
         }
         return value;
       })
     );
 
-    // Generar la tabla con jspdf-autotable
     autoTable(doc, {
       startY,
       head: [columns],
       body: formattedData,
       styles: {
-          fontSize: 10,
-          cellPadding: 3
+        fontSize: 10,
+        cellPadding: 3,
       },
       headStyles: {
-          fillColor: [20, 40, 60] // Color de fondo del encabezado de la tabla (ej. azul oscuro)
-      }
+        fillColor: [20, 40, 60],
+        halign: "center",
+      },
+      bodyStyles: {
+        halign: "left",
+      },
+      columnStyles: {
+        1: { halign: "right" }, // 2da columna a la derecha (común para valores)
+      },
+      theme: "grid",
+      margin: { left: 14, right: 14 },
     });
 
-    // Añadir el logo a todas las páginas después de generar la tabla
+    // Logo en todas las páginas
     if (logoLayout && logoDataURL) {
       const { pageWidth, logoW, logoH, marginTop, marginRight } = logoLayout;
       const x = pageWidth - logoW - marginRight;
@@ -207,6 +213,9 @@ const Reports = ({ user }) => {
       ? reportData.sales.total_invoices
       : salesData.length;
 
+  // === Total general de inventario (sumatoria de L.) ===
+  const inventoryTotal = reportData.inventory.reduce((sum, item) => sum + Number(item.total || 0), 0);
+
   // Manejo del cierre suave del modal
   const handleClose = () => {
     setClosing(true);
@@ -218,6 +227,15 @@ const Reports = ({ user }) => {
 
   // Función de utilidad para formatear números con separadores de miles
   const formatNumber = (num) => new Intl.NumberFormat("es-HN").format(Number(num));
+  // Función moneda Lempiras
+  // 🔧 Corrige el formato de moneda para mostrar Lempiras (no liras)
+  const formatCurrency = (num) => {
+  const value = new Intl.NumberFormat("es-HN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+   }).format(Number(num));
+   return `L ${value}`; // → Ejemplo: L 3,835.86
+  };
 
   // Función para determinar si la tarjeta seleccionada es de stock
   const isStockCard = (value) =>
@@ -258,7 +276,7 @@ const Reports = ({ user }) => {
           onClick={() => setSelectedCard("ventas")}
         >
           <div>
-            <h3>L. {formatNumber(Number(displayTotalSales.toFixed(2)))}</h3>
+            <h3>{formatCurrency(Number(displayTotalSales.toFixed(2)))}</h3>
             <p>Ventas Totales</p>
           </div>
           <div className="icon-wrapper">
@@ -290,7 +308,7 @@ const Reports = ({ user }) => {
           onClick={() => setSelectedCard("promedio")}
         >
           <div>
-            <h3>L. {formatNumber(Number(displayAverageSale.toFixed(2)))}</h3>
+            <h3>{formatCurrency(Number(displayAverageSale.toFixed(2)))}</h3>
             <p>Promedio por Venta</p>
           </div>
           <div className="icon-wrapper">
@@ -326,6 +344,7 @@ const Reports = ({ user }) => {
                 className="btn-modern excel"
                 onClick={(e) => {
                   e.stopPropagation(); // Evita que se abra el modal
+                  // Excel: exporta como números (Excel mostrará número; encabezado aclara que es L.)
                   exportToExcel(salesData, "Ventas_Ultimos7Dias", "Ventas");
                 }}
               >
@@ -341,10 +360,12 @@ const Reports = ({ user }) => {
                 className="btn-modern pdf"
                 onClick={(e) => {
                   e.stopPropagation(); // Evita que se abra el modal
+                  // PDF: formatea la segunda columna como Lempiras
                   exportToPDF(
                     salesData.map((s) => [s.date, s.sales]),
                     "Reporte de Ventas",
-                    ["Fecha", "Ventas (L.)"]
+                    ["Fecha", "Ventas (L.)"],
+                    { currency: true }
                   );
                 }}
               >
@@ -368,7 +389,7 @@ const Reports = ({ user }) => {
                     style={{ width: `${(day.sales / maxSales) * 100}%` }}
                   />
                   <span className="reports-value">
-                    L. {formatNumber(day.sales)}
+                    {formatCurrency(day.sales)}
                   </span>
                 </div>
               </div>
@@ -388,7 +409,12 @@ const Reports = ({ user }) => {
                 className="btn-modern excel"
                 onClick={(e) => {
                   e.stopPropagation();
-                  exportToExcel(reportData.inventory, "Inventario", "Categorías");
+                  // Excel con fila de total
+                  const rows = [
+                    ...reportData.inventory,
+                    { category: "Total general", products: "", total: Number(inventoryTotal.toFixed(2)) },
+                  ];
+                  exportToExcel(rows, "Inventario", "Categorías");
                 }}
               >
                 <img
@@ -403,10 +429,16 @@ const Reports = ({ user }) => {
                 className="btn-modern pdf"
                 onClick={(e) => {
                   e.stopPropagation();
+                  // PDF con fila de total y moneda
+                  const body = [
+                    ...reportData.inventory.map((i) => [i.category, i.products, Number(i.total)]),
+                    ["Total general", "", Number(inventoryTotal.toFixed(2))],
+                  ];
                   exportToPDF(
-                    reportData.inventory.map((i) => [i.category, i.products, i.total]),
+                    body,
                     "Reporte de Inventario",
-                    ["Categoría", "Productos", "Total (L.)"]
+                    ["Categoría", "Productos", "Total (L.)"],
+                    { currency: true }
                   );
                 }}
               >
@@ -426,9 +458,17 @@ const Reports = ({ user }) => {
                 <span>
                   {item.category} ({item.products} productos)
                 </span>
-                <strong>L. {formatNumber(Number(item.total.toFixed(2)))}</strong>
+                <strong>{formatCurrency(Number(item.total.toFixed(2)))}</strong>
               </div>
             ))}
+
+            {/* Línea de total general visual */}
+            <div className="reports-inventory-item reports-total-row">
+              <span className="reports-total-label">Total general</span>
+              <strong className="reports-total-amount">
+                {formatCurrency(Number(inventoryTotal.toFixed(2)))}
+              </strong>
+            </div>
           </div>
         </div>
 
@@ -464,14 +504,16 @@ const Reports = ({ user }) => {
                 className="btn-modern pdf"
                 onClick={(e) => {
                   e.stopPropagation();
+                  // PDF sin moneda (solo cantidades)
                   exportToPDF(
                     [
-                        ["Programada", 3], 
-                        ["Completada", 5], 
-                        ["Cancelada", 2]
-                    ], 
-                    "Reporte de Citas", 
-                    ["Estado", "Cantidad"]
+                      ["Programada", 3],
+                      ["Completada", 5],
+                      ["Cancelada", 2],
+                    ],
+                    "Reporte de Citas",
+                    ["Estado", "Cantidad"],
+                    { currency: false }
                   );
                 }}
               >
@@ -487,14 +529,14 @@ const Reports = ({ user }) => {
           </div>
           <div className="reports-inventory-list">
             {[
-                { estado: "Programada", cantidad: 3, clase: "programada" },
-                { estado: "Completada", cantidad: 5, clase: "completada" },
-                { estado: "Cancelada", cantidad: 2, clase: "cancelada" },
+              { estado: "Programada", cantidad: 3, clase: "programada" },
+              { estado: "Completada", cantidad: 5, clase: "completada" },
+              { estado: "Cancelada", cantidad: 2, clase: "cancelada" },
             ].map((item, i) => (
-                <div key={i} className="reports-inventory-item">
-                    <span className={`reports-tag ${item.clase}`}>{item.estado}</span>
-                    <strong>{formatNumber(item.cantidad)}</strong>
-                </div>
+              <div key={i} className="reports-inventory-item">
+                <span className={`reports-tag ${item.clase}`}>{item.estado}</span>
+                <strong>{formatNumber(item.cantidad)}</strong>
+              </div>
             ))}
           </div>
         </div>
@@ -523,10 +565,12 @@ const Reports = ({ user }) => {
                 className="btn-modern pdf"
                 onClick={(e) => {
                   e.stopPropagation();
+                  // PDF sin moneda (cantidades)
                   exportToPDF(
                     reportData.lowStock.map((p) => [p.name, p.quantity]),
                     "Reporte Stock Bajo",
-                    ["Producto", "Cantidad"]
+                    ["Producto", "Cantidad"],
+                    { currency: false }
                   );
                 }}
               >
@@ -585,7 +629,8 @@ const Reports = ({ user }) => {
                       exportToPDF(
                         salesData.map((s) => [s.date, s.sales]),
                         "Reporte de Ventas",
-                        ["Fecha", "Ventas (L.)"]
+                        ["Fecha", "Ventas (L.)"],
+                        { currency: true }
                       )
                     }
                   >
@@ -610,7 +655,7 @@ const Reports = ({ user }) => {
                           }}
                         />
                         <span className="reports-value">
-                          L. {formatNumber(day.sales)}
+                          {formatCurrency(day.sales)}
                         </span>
                       </div>
                     </div>
@@ -648,7 +693,8 @@ const Reports = ({ user }) => {
                       exportToPDF(
                         [["Facturas Emitidas", displayTotalInvoices]],
                         "Reporte de Facturas",
-                        ["Métrica", "Valor"]
+                        ["Métrica", "Valor"],
+                        { currency: false }
                       )
                     }
                   >
@@ -702,7 +748,8 @@ const Reports = ({ user }) => {
                       exportToPDF(
                         [["Promedio por Venta (L.)", Number(displayAverageSale.toFixed(2))]],
                         "Reporte Promedio por Venta",
-                        ["Métrica", "Valor (L.)"]
+                        ["Métrica", "Valor (L.)"],
+                        { currency: true }
                       )
                     }
                   >
@@ -717,7 +764,7 @@ const Reports = ({ user }) => {
                 </div>
                 <p style={{ fontSize: "1.05rem", marginTop: 8 }}>
                   Promedio actual:{" "}
-                  <strong>L. {formatNumber(Number(displayAverageSale.toFixed(2)))}</strong>
+                  <strong>{formatCurrency(Number(displayAverageSale.toFixed(2)))}</strong>
                 </p>
               </div>
             )}
@@ -729,7 +776,16 @@ const Reports = ({ user }) => {
                 <div className="export-buttons">
                   <button
                     className="btn-modern excel"
-                    onClick={() => exportToExcel(reportData.inventory, "Inventario", "Categorías")}
+                    onClick={() =>
+                      exportToExcel(
+                        [
+                          ...reportData.inventory,
+                          { category: "Total general", products: "", total: Number(inventoryTotal.toFixed(2)) },
+                        ],
+                        "Inventario",
+                        "Categorías"
+                      )
+                    }
                   >
                     <img
                       src={ExportarXLSXIcon}
@@ -743,9 +799,13 @@ const Reports = ({ user }) => {
                     className="btn-modern pdf"
                     onClick={() =>
                       exportToPDF(
-                        reportData.inventory.map((i) => [i.category, i.products, i.total]),
+                        [
+                          ...reportData.inventory.map((i) => [i.category, i.products, Number(i.total)]),
+                          ["Total general", "", Number(inventoryTotal.toFixed(2))],
+                        ],
                         "Reporte de Inventario",
-                        ["Categoría", "Productos", "Total (L.)"]
+                        ["Categoría", "Productos", "Total (L.)"],
+                        { currency: true }
                       )
                     }
                   >
@@ -765,10 +825,17 @@ const Reports = ({ user }) => {
                         {item.category} ({item.products} productos)
                       </span>
                       <strong>
-                        L. {formatNumber(Number(item.total.toFixed(2)))}
+                        {formatCurrency(Number(item.total.toFixed(2)))}
                       </strong>
                     </div>
                   ))}
+
+                  <div className="reports-inventory-item reports-total-row">
+                    <span className="reports-total-label">Total general</span>
+                    <strong className="reports-total-amount">
+                      {formatCurrency(Number(inventoryTotal.toFixed(2)))}
+                    </strong>
+                  </div>
                 </div>
               </div>
             )}
@@ -796,7 +863,8 @@ const Reports = ({ user }) => {
                       exportToPDF(
                         reportData.lowStock.map((p) => [p.name, p.quantity]),
                         "Reporte Stock Bajo",
-                        ["Producto", "Cantidad"]
+                        ["Producto", "Cantidad"],
+                        { currency: false }
                       )
                     }
                   >
@@ -822,71 +890,71 @@ const Reports = ({ user }) => {
 
             {/* Contenido del Modal: Citas */}
             {selectedCard === "citas" && (
-                <div className="reports-card">
-                    <h2>Detalle de Estado de Citas</h2>
-                    <div className="export-buttons">
-                        <button
-                            className="btn-modern excel"
-                            onClick={() =>
-                                exportToExcel(
-                                    [
-                                        { estado: "Programada", cantidad: 3 },
-                                        { estado: "Completada", cantidad: 5 },
-                                        { estado: "Cancelada", cantidad: 2 },
-                                    ],
-                                    "Estado_Citas",
-                                    "Citas"
-                                )
-                            }
-                        >
-                            <img
-                                src={ExportarXLSXIcon}
-                                alt="Exportar Excel"
-                                className="btn-icon"
-                                style={{ width: 18, height: 18, objectFit: "contain", marginRight: 6, filter: "none" }}
-                            />
-                            Exportar Excel
-                        </button>
+              <div className="reports-card">
+                <h2>Detalle de Estado de Citas</h2>
+                <div className="export-buttons">
+                  <button
+                    className="btn-modern excel"
+                    onClick={() =>
+                      exportToExcel(
+                        [
+                          { estado: "Programada", cantidad: 3 },
+                          { estado: "Completada", cantidad: 5 },
+                          { estado: "Cancelada", cantidad: 2 },
+                        ],
+                        "Estado_Citas",
+                        "Citas"
+                      )
+                    }
+                  >
+                    <img
+                      src={ExportarXLSXIcon}
+                      alt="Exportar Excel"
+                      className="btn-icon"
+                      style={{ width: 18, height: 18, objectFit: "contain", marginRight: 6, filter: "none" }}
+                    />
+                    Exportar Excel
+                  </button>
 
-                        <button
-                            className="btn-modern pdf"
-                            onClick={() =>
-                                exportToPDF(
-                                    [
-                                        ["Programada", 3],
-                                        ["Completada", 5],
-                                        ["Cancelada", 2],
-                                    ],
-                                    "Reporte de Citas",
-                                    ["Estado", "Cantidad"]
-                                )
-                            }
-                        >
-                            <img
-                                src={ExportarPDFIcon}
-                                alt="Exportar PDF"
-                                className="btn-icon"
-                                style={{ width: 18, height: 18, objectFit: "contain", marginRight: 6, filter: "none" }}
-                            />
-                            Exportar PDF
-                        </button>
-                    </div>
-
-                    <div className="reports-inventory-list">
-                        {[
-                            { estado: "Programada", cantidad: 3, clase: "programada" },
-                            { estado: "Completada", cantidad: 5, clase: "completada" },
-                            { estado: "Cancelada", cantidad: 2, clase: "cancelada" },
-                        ].map((item, i) => (
-                            <div key={i} className="reports-inventory-item">
-                                <span className={`reports-tag ${item.clase}`}>{item.estado}</span>
-                                <strong>{formatNumber(item.cantidad)}</strong>
-                            </div>
-                        ))}
-                    </div>
+                  <button
+                    className="btn-modern pdf"
+                    onClick={() =>
+                      exportToPDF(
+                        [
+                          ["Programada", 3],
+                          ["Completada", 5],
+                          ["Cancelada", 2],
+                        ],
+                        "Reporte de Citas",
+                        ["Estado", "Cantidad"],
+                        { currency: false }
+                      )
+                    }
+                  >
+                    <img
+                      src={ExportarPDFIcon}
+                      alt="Exportar PDF"
+                      className="btn-icon"
+                      style={{ width: 18, height: 18, objectFit: "contain", marginRight: 6, filter: "none" }}
+                    />
+                    Exportar PDF
+                  </button>
                 </div>
-            )}
 
+                <div className="reports-inventory-list">
+                  {[
+                    { estado: "Programada", cantidad: 3, clase: "programada" },
+                    { estado: "Completada", cantidad: 5, clase: "completada" },
+                    { estado: "Cancelada", cantidad: 2, clase: "cancelada" },
+                  ].map((item, i) => (
+                    <div key={i} className="reports-inventory-item">
+                      <span className={`reports-tag ${item.clase}`}>{item.estado}</span>
+                      <strong>{formatNumber(item.cantidad)}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Fallback */}
             {selectedCard &&
