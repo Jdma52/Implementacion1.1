@@ -47,9 +47,12 @@ export async function deleteUser(id) {
   return data;
 }
 
-export async function toggleUserStatus(id) {
+// 🔄 Ahora acepta "action": "active" | "inactive" | "blocked"
+export async function toggleUserStatus(id, action) {
   const res = await fetch(`${BASE_URL}/${id}/toggle-status`, {
     method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.mensaje || "Error cambiando estado");
