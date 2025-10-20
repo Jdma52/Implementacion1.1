@@ -473,3 +473,26 @@
   background-color: #f0f8ff;
   transform: scale(1.01);
 }
+
+/* === Realce para totales de inventario === */
+.reports-total-row {
+  border-top: 2px solid #e5e7eb;
+  margin-top: 6px;
+  padding-top: 10px;
+}
+
+.reports-total-label {
+  font-weight: 700;
+  color: #065f46;
+}
+
+.reports-total-amount {
+  font-weight: 800;
+  color: #065f46;
+}
+
+/* Opcional: estilo típico de valores en moneda */
+.reports-value,
+.reports-inventory-item strong {
+  letter-spacing: 0.2px;
+}
