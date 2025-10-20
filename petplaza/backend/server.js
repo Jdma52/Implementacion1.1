@@ -12,6 +12,8 @@ const ownerRoutes = require("./routes/owners");
 const petRoutes = require("./routes/pets"); // 👈 RUTA ACTUALIZADA
 const appointmentRoutes = require("./routes/appointments");
 const dashboardRoutes = require("./routes/dashboard");
+const servicioRoutes = require("./routes/servicioRoutes");
+const facturaRoutes = require("./routes/facturaRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -50,6 +52,8 @@ app.use("/api/owners", ownerRoutes);
 app.use("/api/pets", petRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/servicios", servicioRoutes);
+app.use("/api/facturas", facturaRoutes);
 
 
 /* 
