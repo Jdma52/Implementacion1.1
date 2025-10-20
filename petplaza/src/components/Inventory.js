@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import "../CSS/Inventory.css";
 
+// ✅ Importar funciones de la API centralizada
 import {
   getProducts,
   createProduct,
@@ -449,4 +450,5 @@ const Inventory = () => {
 };
 
 export default Inventory;
+
 
