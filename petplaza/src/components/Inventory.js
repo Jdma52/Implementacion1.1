@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import "../CSS/Inventory.css";
 
-// ✅ Importar funciones de la API centralizada
+
 import {
   getProducts,
   createProduct,
@@ -53,7 +53,7 @@ const Inventory = () => {
     expiryDate: "",
   });
 
-  // 📌 Cargar productos al iniciar
+  // Cargar productos al iniciar
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -66,7 +66,7 @@ const Inventory = () => {
     fetchData();
   }, []);
 
-  // 📊 Métricas
+  // Métricas
   const totalProducts = items.length;
   const stockLow = items.filter((i) => Number(i.quantity) <= Number(i.minStock)).length;
   const expired = items.filter(
@@ -81,7 +81,7 @@ const Inventory = () => {
     i.name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // 📌 Manejo formulario
+  // Manejo formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -138,7 +138,7 @@ const Inventory = () => {
     }, 300);
   };
 
-  // 📌 Guardar producto (crear o actualizar)
+  // Guardar producto (crear o actualizar)
   const handleSave = async (e) => {
     e.preventDefault();
     try {
@@ -171,7 +171,7 @@ const Inventory = () => {
     }
   };
 
-  // 📌 Eliminar producto
+  // Eliminar producto
   const confirmDelete = (item) => {
     setItemToDelete(item);
     setShowDeleteModal(true);
