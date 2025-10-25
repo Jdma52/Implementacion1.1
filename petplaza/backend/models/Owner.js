@@ -17,10 +17,9 @@ const ownerSchema = new mongoose.Schema(
     email: {
       type: String,
       trim: true,
-      lowercase: true,
       match: [/^\S+@\S+\.\S+$/, "Correo inválido"],
-      unique: true, // Único pero opcional
-      sparse: true, // Permite varios sin email
+      unique: true,
+      sparse: true,
     },
     dni: {
       type: String,
@@ -37,7 +36,7 @@ const ownerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🔹 Índices optimizados para búsqueda
+// Índices optimizados para búsqueda
 ownerSchema.index({
   full_name: "text",
   email: "text",
@@ -45,7 +44,7 @@ ownerSchema.index({
   dni: "text",
 });
 
-// 🔹 Middleware: eliminar mascotas asociadas al eliminar un dueño
+// Middleware: eliminar mascotas asociadas
 ownerSchema.pre("findOneAndDelete", async function (next) {
   try {
     const owner = await this.model.findOne(this.getFilter());
