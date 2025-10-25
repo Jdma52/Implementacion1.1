@@ -1,487 +1,411 @@
 /* ==========================================================
-   CONTENEDOR GENERAL DE LA VISTA DE DUEÑOS
+   CONTENEDOR PRINCIPAL
    ========================================================== */
-.owners-container {
-  padding: 1rem;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: #f9fafb;
-  color: #374151;
+.mascotas-container {
+  padding: 20px; /* Espaciado interno del contenedor principal */
+  background: #f8f9fa; /* Color de fondo general */
+  font-family: "Inter", "Roboto", sans-serif; /* Tipografía general */
+  position: relative; /* Para poder posicionar elementos sobresalientes */
 }
 
 /* ==========================================================
-   HEADER (TÍTULO Y BOTÓN)
+   ENCABEZADO
    ========================================================== */
-.owners-container .owners-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.8rem;
+.mascotas-container .mascotas-header {
+  display: flex; /* Usar flexbox para distribución horizontal */
+  justify-content: space-between; /* Separar título y botón */
+  align-items: center; /* Centrar verticalmente */
+  margin-bottom: 20px; /* Espaciado inferior */
+  position: relative; /* Para posicionar iconos sobresalientes */
 }
 
-.owners-container .owners-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0;
-  color: #111827;
+/* Wrapper para título + ícono */
+.mascotas-container .mascotas-title-wrapper {
+  display: flex; /* Flex horizontal */
+  align-items: flex-start; /* Alinear al inicio para que el ícono quede más arriba */
+  gap: 20px; /* Espacio entre ícono y texto */
+  position: relative; /* Para permitir que el ícono sobresalga */
+  margin-left: 40px; /* Mueve todo el conjunto hacia la derecha */
 }
 
-.owners-container .owners-subtitle {
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin: 0.2rem 0 0;
+/* Ícono del título */
+.mascotas-container .mascotas-title-wrapper svg {
+  width: 32px; /* Tamaño del ícono */
+  height: 32px;
+  fill: none; /* Sin relleno */
+  stroke: #00ff22; /* Contorno verde medio */
+  stroke-width: 19px; /* Grosor del contorno aumentado */
+  position: absolute; /* Posición absoluta para sobresalir */
+  left: -40px; /* Separación respecto al texto */
+  top: -6px; /* Lo sube un poco por encima del texto */
+  flex-shrink: 0; /* No se achique */
+  transition: transform 0.2s ease, stroke 0.2s ease; /* Transición suave */
+}
+
+/* Título principal */
+.mascotas-container .mascotas-title {
+  font-size: 22px; /* Tamaño de letra del título */
+  font-weight: 600; /* Grosor de la fuente */
+  color: #1d1d1f; /* Color del texto */
+  margin: 0; /* Elimina márgenes predeterminados */
+  line-height: 1.2;
+}
+
+/* Subtítulo */
+.mascotas-container .mascotas-subtitle {
+  font-size: 14px; /* Tamaño de letra del subtítulo */
+  color: #6b7280; /* Color gris para subtítulo */
+  margin: 2px 0 0 0; /* Espaciado superior pequeño */
 }
 
 /* ==========================================================
-   BOTONES GENERALES
+   BOTÓN NUEVA MASCOTA
    ========================================================== */
-.owners-container .btn-primary,
-.owners-container .modal-actions .btn-secondary {
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
+.mascotas-container .btn-nueva-mascota {
+  background: #00a884; /* Color de fondo principal */
+  color: #fff; /* Color del texto */
+  padding: 10px 18px; /* Espaciado interno */
+  border: none; /* Sin borde */
+  border-radius: 14px; /* Bordes redondeados */
+  font-size: 14px; /* Tamaño del texto */
+  cursor: pointer; /* Cambia el cursor al pasar encima */
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; /* Transición suave */
 }
-
-.owners-container .btn-primary {
-  background: #00a884;
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-}
-
-.owners-container .btn-primary:hover,
-.owners-container .btn-primary:focus {
-  box-shadow: 0 0 10px rgba(4, 255, 96, 0.842);
-  transform: translateY(-2px);
-  outline: none;
-}
-
-/* ==========================================================
-   BOTÓN CANCELAR GENÉRICO
-   ========================================================== */
-.owners-container .modal-actions .btn-secondary.cancel {
-  background: #c9c5c5;
-  border: 2px solid #b8b7b7;
-  color: #000;
-  transition: all 0.3s ease;
-}
-
-.owners-container .modal-actions .btn-secondary.cancel:hover,
-.owners-container .modal-actions .btn-secondary.cancel:focus {
-  box-shadow: 0 0 12px rgb(121, 72, 114);
-  transform: translateY(-2px);
-  outline: none;
-}
-
-/* ==========================================================
-   BOTÓN ELIMINAR (MODAL)
-   ========================================================== */
-.owners-container .btn-danger {
-  background: #ef4444;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.owners-container .btn-danger:hover,
-.owners-container .btn-danger:focus {
-  transform: translateY(-2px);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
-  outline: none;
-}
-
-/* ==========================================================
-   BOTÓN CANCELAR ALTERNATIVO (MODAL ELIMINAR)
-   ========================================================== */
-.owners-container .btn-cancel-alt {
-  background: #c9c5c5;
-  border: 1px solid #b8b7b7;
-  color: #000;
-  border-radius: 8px;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.owners-container .btn-cancel-alt:hover,
-.owners-container .btn-cancel-alt:focus {
-  box-shadow: 0 0 8px rgba(121, 72, 114, 0.6);
-  transform: translateY(-2px);
-  outline: none;
+.mascotas-container .btn-nueva-mascota:hover {
+  background: #059669; /* Cambio de color al hover */
+  transform: scale(1.05); /* Aumenta tamaño ligeramente */
+  box-shadow: 0 0 12px rgba(0, 168, 132, 0.4); /* Sombra al pasar el mouse */
 }
 
 /* ==========================================================
    BUSCADOR
    ========================================================== */
-.owners-container .search-box {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  border: 1.9px solid #d1d5db;
-  border-radius: 10px;
-  padding: 0.5rem 0.4rem;
-  margin-bottom: 0.8rem;
-  max-width: 400px;
-  transition: all 0.3s ease;
-  position: relative;
+.mascotas-container .mascotas-search {
+  position: relative; /* Para posicionar la lupa */
+  margin-bottom: 20px; /* Espaciado inferior */
+  max-width: 600px; /* Ancho máximo del buscador */
 }
 
-.owners-container .search-box:hover,
-.owners-container .search-box:focus-within {
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-  border-color: #3b82f6;
+.mascotas-container .mascotas-search input {
+  width: 100%; /* Ocupa todo el ancho disponible */
+  padding: 12px 16px; /* Espaciado interno */
+  padding-left: 40px; /* Deja espacio para la lupa */
+  border: 1px solid #e5e7eb; /* Borde gris claro */
+  border-radius: 10px; /* Bordes redondeados */
+  font-size: 14px; /* Tamaño del texto */
+  outline: none; /* Quita el outline por defecto */
+  transition: box-shadow 0.2s ease, border-color 0.2s ease; /* Transición suave */
+}
+.mascotas-container .mascotas-search input:focus {
+  border-color: #00a884; /* Color del borde al enfocarse */
+  box-shadow: 0 0 8px rgba(0, 168, 132, 0.4); /* Sombra al enfocar */
 }
 
-.owners-container .search-icon {
-  position: absolute;
-  left: 0.6rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6b7280;
-  margin: 0;
-}
-
-.owners-container .search-box input {
-  border: none;
-  outline: none;
-  flex: 1;
-  background: transparent;
-  font-size: 0.85rem;
-  color: #374151;
-  padding-left: 2.2rem;
+/* Ícono de lupa */
+.mascotas-container .mascotas-search .search-icon {
+  position: absolute; /* Posicionamos la lupa dentro del contenedor */
+  left: 12px; /* Separación del borde izquierdo del input */
+  top: 50%; /* Centrado vertical */
+  transform: translateY(-50%); /* Ajuste vertical exacto */
+  color: #6b7280; /* Color de la lupa */
+  font-size: 16px; /* Tamaño de la lupa */
+  pointer-events: none; /* No bloquea escribir en el input */
 }
 
 /* ==========================================================
-   TABLA DE DUEÑOS
+   GRID DE TARJETAS
    ========================================================== */
-.owners-container .table-wrapper {
-  overflow-x: auto;
+.mascotas-container .mascotas-grid {
+  display: grid; /* Usar grid para tarjetas */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Columnas adaptables */
+  gap: 20px; /* Espacio entre tarjetas */
 }
 
-.owners-container .owners-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 6px;
-  background: transparent;
-  table-layout: auto;
-}
-
-.owners-container .owners-table th,
-.owners-container .owners-table td {
-  padding: 0.5rem 0.8rem;
-  font-size: 0.8rem;
-  text-align: left;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-.owners-container .owners-table th {
-  color: #6b7280;
-  font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.owners-container .owners-table tr {
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.owners-container .owners-table td {
-  color: #374151;
-  border-top: 1px solid #f0f0f0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.owners-container .owners-table td:first-child {
-  border-top-left-radius: 6px;
-  border-bottom-left-radius: 6px;
-}
-
-.owners-container .owners-table td:last-child {
-  border-top-right-radius: 6px;
-  border-bottom-right-radius: 6px;
+/* Estado vacío */
+.mascotas-container .empty-state {
+  grid-column: 1 / -1; /* Ocupa todo el ancho del grid */
+  text-align: center; /* Centrar el texto */
+  color: #6b7280; /* Color gris */
+  padding: 28px 0; /* Espaciado vertical */
+  font-size: 15px; /* Tamaño de letra */
+  font-style: italic; /* Estilo cursiva */
 }
 
 /* ==========================================================
-   AVATAR E INFO DEL DUEÑO
+   TARJETA DE MASCOTA
    ========================================================== */
-.owners-container .owner-info {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+.mascotas-container .mascota-card {
+  background: #fff; /* Fondo blanco */
+  border-radius: 14px; /* Bordes redondeados */
+  padding: 18px; /* Espaciado interno */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Sombra ligera */
+  position: relative; /* Para posicionar acciones */
+  transition: transform 0.25s ease, box-shadow 0.25s ease; /* Transición suave */
+}
+.mascotas-container .mascota-card:hover {
+  transform: translateY(-5px); /* Eleva la tarjeta al hover */
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12); /* Sombra más intensa al hover */
 }
 
-.owners-container .owner-avatar {
-  width: 28px;
+/* Encabezado tarjeta */
+.mascotas-container .mascota-header {
+  display: flex; /* Flexbox horizontal */
+  align-items: center; /* Centrado vertical */
+  gap: 12px; /* Espacio entre icono y texto */
+  margin-bottom: 8px; /* Margen inferior */
+}
+
+/* Círculo con huella */
+.mascotas-container .mascota-icon {
+  width: 56px; /* Ancho */
+  height: 56px; /* Alto */
+  border-radius: 50%; /* Circular */
+  background: #eafaf1; /* Fondo verde pálido */
+  border: 2px solid #5ff741e8; /* Borde verde */
+  display: flex; /* Centrar icono */
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* No se achica */
+  transform: rotate(25deg); /* Rotación para efecto visual */
+  box-shadow: 0 6px 16px rgba(0, 168, 132, 0.08); /* Sombra */
+}
+.mascotas-container .mascota-icon svg {
+  width: 28px; /* Tamaño del icono */
   height: 28px;
-  border-radius: 50%;
-  background: #dcfce7;
-  color: #15803d;
+  display: block;
+  background: transparent; /* Fondo transparente */
+}
+.mascotas-container .mascota-icon svg path,
+.mascotas-container .mascota-icon svg circle,
+.mascotas-container .mascota-icon svg g {
+  fill: #eafaf1 !important; /* Color de relleno */
+  stroke: #35f50fe8 !important; /* Color del borde */
+  stroke-width: 1.6px !important;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Títulos */
+.mascotas-container .mascota-titles {
+  display: flex; /* Flex vertical */
+  flex-direction: column;
+}
+.mascotas-container .mascota-nombre {
+  font-size: 18px; /* Tamaño del nombre */
+  font-weight: 600; /* Grosor */
+  color: #1d1d1f; /* Color texto */
+  margin: 0;
+  line-height: 1.2;
+}
+.mascotas-container .mascota-raza {
+  font-size: 14px; /* Tamaño de subtítulo */
+  color: #6b7280;
+  margin: 2px 0 0 0;
+}
+
+/* Texto dentro tarjeta */
+.mascotas-container .mascota-card p {
+  font-size: 14px;
+  color: #374151;
+  margin: 6px 0;
+  display: flex; /* Para icono y texto alineados */
+  align-items: center;
+  gap: 8px;
+}
+.mascotas-container .mascota-card p svg {
+  font-size: 16px;
+  color: #6b7280;
+  opacity: 0.9;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.mascotas-container .mascota-card p svg:hover {
+  transform: scale(1.15);
+  color: #00a884;
+}
+.mascotas-container .palette-icon {
+  color: #6b7280;
+}
+
+/* ==========================================================
+   ACCIONES TARJETA (EDITAR/ELIMINAR)
+   ========================================================== */
+.mascotas-container .card-actions {
+  position: absolute; /* Posición absoluta */
+  top: 10px;
+  right: 12px;
+  display: flex; /* Flex horizontal */
+  gap: 6px; /* Espacio entre botones */
+}
+.mascotas-container .card-actions .icon {
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
 }
-
-/* ==========================================================
-   ACCIONES
-   ========================================================== */
-.owners-container .action-buttons {
-  display: flex;
-  gap: 0.3rem;
-}
-
-.owners-container .action-btn {
-  border: none;
-  cursor: pointer;
-  padding: 0.3rem;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  transition: all 0.2s ease;
-}
-
-.owners-container .action-btn.edit {
+.mascotas-container .card-actions .edit {
   background: #e0f2fe;
   color: #0369a1;
 }
-
-.owners-container .action-btn.edit:hover {
+.mascotas-container .card-actions .edit:hover,
+.mascotas-container .card-actions .edit:focus {
   transform: scale(1.15);
   box-shadow: 0 0 8px rgba(17, 153, 226, 0.9);
+  outline: none;
 }
-
-.owners-container .action-btn.delete {
+.mascotas-container .card-actions .delete {
   background: #fee2e2;
   color: #f80101;
 }
-
-.owners-container .action-btn.delete:hover {
+.mascotas-container .card-actions .delete:hover,
+.mascotas-container .card-actions .delete:focus {
   transform: scale(1.1);
-  box-shadow: 0 0 6px rgba(255, 2, 2, 0.8);
-}
-
-/* ==========================================================
-   ESTADO VACÍO
-   ========================================================== */
-.owners-container .empty-state {
-  text-align: center;
-  padding: 0.8rem;
-  font-style: italic;
-  font-size: 0.85rem;
-  color: #57484886;
-}
-
-/* ==========================================================
-   MODAL GENERAL
-   ========================================================== */
-.owners-container .modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-  transition: all 0.25s ease;
-}
-
-.owners-container .modal-overlay.closing {
-  opacity: 0;
-}
-
-.owners-container .modal {
-  background: #fff;
-  border-radius: 6px;
-  padding: 1rem;
-  width: 100%;
-  max-width: 380px;
-  max-height: 85vh;
-  overflow-y: auto;
-  animation: fadeIn 0.3s ease;
-  position: relative;
-}
-
-.owners-container .modal.closing {
-  opacity: 0;
-  transform: translateY(-10px);
-  transition: all 0.25s ease;
-}
-
-.owners-container .modal h2 {
-  margin: 0 0 0.8rem 0;
-  font-size: 1rem;
-}
-
-/* Botón "X" para cerrar */
-.owners-container .close-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: transparent;
-  border: none;
-  font-size: 1rem;
-  color: #6b7280;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.owners-container .close-btn:hover {
-  color: #ef4444;
-}
-
-/* ==========================================================
-   CAMPOS DEL FORMULARIO
-   ========================================================== */
-.owners-container .modal label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  font-size: 0.8rem;
-  margin-bottom: 0.6rem;
-}
-
-.owners-container .modal input,
-.owners-container .modal textarea,
-.owners-container .modal select {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 0.45rem;
-  font-size: 0.85rem;
-  transition: all 0.2s ease;
-}
-
-.owners-container .modal input:focus,
-.owners-container .modal textarea:focus {
-  border-color: #00a884;
-  box-shadow: 0 0 6px rgba(0, 168, 132, 0.25);
+  box-shadow: 0 0 6px rgba(255, 2, 2, 0.815);
   outline: none;
 }
 
-/* Campo con error */
-.owners-container .modal input.error,
-.owners-container .modal textarea.error {
-  border-color: #ef4444 !important;
-  background-color: #fef2f2 !important;
-}
-
-/* Mensaje de error (rojo visible) */
-.owners-container .error-text,
-.owners-container .error-message {
-  color: #dc2626 !important;
-  font-size: 0.78rem;
-  font-weight: 500;
-  margin-top: 0.2rem;
-  line-height: 1.3;
-}
-
 /* ==========================================================
-   CAMPO DE TELÉFONO
+   MODALES
    ========================================================== */
-.owners-container .react-tel-input {
-  width: 100%;
-}
-
-.owners-container .react-tel-input .form-control {
-  width: 100% !important;
-  height: 40px !important;
-  font-size: 0.9rem !important;
-  border-radius: 6px !important;
-  border: 1px solid #d1d5db !important;
-  padding-left: 52px !important;
-}
-
-.owners-container .react-tel-input .form-control:focus {
-  border-color: #00a884 !important;
-  box-shadow: 0 0 6px rgba(0, 168, 132, 0.25) !important;
-}
-
-.owners-container .react-tel-input .flag-dropdown {
-  background: #f9fafb !important;
-  border-right: 1px solid #d1d5db !important;
-  border-radius: 6px 0 0 6px !important;
-}
-
-.owners-container .react-tel-input .selected-flag:hover {
-  background: #f3f4f6 !important;
-}
-
-/* ==========================================================
-   TOAST
-   ========================================================== */
-.owners-container .toast {
+.mascotas-container .modal-overlay {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
-  z-index: 9999;
+  inset: 0; /* top, right, bottom, left 0 */
   display: flex;
+  justify-content: center;
   align-items: center;
+}
+.mascotas-container .modal-overlay.active { animation: overlayIn 250ms ease forwards; }
+.mascotas-container .modal-overlay.closing { animation: overlayOut 250ms ease forwards; }
+
+.mascotas-container .modal {
+  background: #fff;
+  width: 520px;
+  max-width: 92%;
+  padding: 24px;
+  border-radius: 14px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.18);
+}
+.mascotas-container .modal.active { animation: modalIn 250ms ease forwards; }
+.mascotas-container .modal.closing { animation: modalOut 250ms ease forwards; }
+
+/* Animaciones modal */
+@keyframes overlayIn {
+  from { background: rgba(0,0,0,0); }
+  to   { background: rgba(0,0,0,0.4); }
+}
+@keyframes overlayOut {
+  from { background: rgba(0,0,0,0.4); }
+  to   { background: rgba(0,0,0,0); }
+}
+@keyframes modalIn {
+  from { transform: translateY(12px) scale(0.98); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+@keyframes modalOut {
+  from { transform: translateY(0)    scale(1);    opacity: 1; }
+  to   { transform: translateY(12px) scale(0.98); opacity: 0; }
+}
+
+/* Contenido modal */
+.mascotas-container .modal h3 {
+  margin: 0 0 14px 0; /* Margen inferior */
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+/* Formulario modal con labels */
+.mascotas-container .modal-form {
+  display: grid; /* Grid para inputs */
+  grid-template-columns: 1fr 1fr; /* Dos columnas */
+  gap: 12px; /* Espacio entre campos */
+  margin-bottom: 18px;
+}
+.mascotas-container .modal-form label {
+  display: flex; /* Flex vertical para label + input */
+  flex-direction: column;
+  font-size: 14px; /* Tamaño del label */
+  color: #374151; /* Color del texto */
+  gap: 4px; /* Espacio entre label y campo */
+}
+.mascotas-container .modal-form input,
+.mascotas-container .modal-form select {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.mascotas-container .modal-form input:focus,
+.mascotas-container .modal-form select:focus {
+  border-color: #00a884;
+  box-shadow: 0 0 6px rgba(0, 168, 132, 0.4);
+}
+
+/* Botones modal */
+.mascotas-container .modal-actions {
+  display: flex; /* Flex horizontal */
+  justify-content: flex-end; /* Alineación derecha */
   gap: 10px;
-  min-width: 220px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(2,6,23,0.4);
-  color: #fff;
-  font-size: 0.875rem;
 }
-
-.owners-container .toast.success {
+.mascotas-container .btn-cancelar {
+  background: #e40b0b;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.mascotas-container .btn-cancelar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgb(252, 0, 0);
+}
+.mascotas-container .btn-guardar {
   background: #00a884;
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
-
-.owners-container .toast.error {
-  background: #1f2937;
-}
-
-/* ==========================================================
-   ANIMACIONES
-   ========================================================== */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.mascotas-container .btn-guardar:hover {
+  background: #059669;
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgb(0, 255, 200);
 }
 
 /* ==========================================================
-   RESPONSIVO
+   RESPONSIVE
    ========================================================== */
 @media (max-width: 768px) {
-  .owners-container .owners-header {
-    flex-direction: column;
+  .mascotas-container .mascotas-header {
+    flex-direction: column; /* Header vertical en pantallas pequeñas */
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 10px;
   }
 
-  .owners-container .btn-primary {
-    align-self: flex-end;
+  .mascotas-container .btn-nueva-mascota {
+    width: 100%; /* Botón ocupa todo el ancho */
+    text-align: center;
   }
 
-  .owners-container .owners-table th,
-  .owners-container .owners-table td {
-    font-size: 0.75rem;
-    padding: 0.4rem;
+  .mascotas-container .modal-form {
+    grid-template-columns: 1fr; /* Campos apilados */
   }
 
-  .owners-container .search-box {
-    max-width: 100%;
+  /* Ajuste del buscador en responsividad */
+  .mascotas-container .mascotas-search input {
+    width: 80%; /* Que siga ocupando todo el contenedor */
+    max-width: 300px; /* Limita la longitud en móviles */
+    margin: 0; /* Eliminamos el centrado automático */
+    display: block; /* Para que funcione correctamente */
   }
 }
