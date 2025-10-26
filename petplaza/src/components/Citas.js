@@ -1,163 +1,238 @@
 import React, { useState, useEffect } from "react";
-import { Search, CalendarHeart, Pencil, Trash2 } from "lucide-react";
+import {
+  Search,
+  CalendarHeart,
+  Pencil,
+  Trash2,
+  AlertTriangle,
+  CalendarDays,
+  Clock,
+  CheckCircle,
+} from "lucide-react";
 import "../CSS/Citas.css";
+import {
+  getAppointments,
+  createAppointment,
+  updateAppointment,
+  deleteAppointment,
+} from "../apis/appointmentsApi";
+import { getOwners } from "../apis/ownersApi";
+import { getPets } from "../apis/petsApi";
+import { getUsers } from "../apis/usersApi";
 
 function Citas() {
-  const ejemplos = [
-    {
-      id: 1,
-      fecha: "2025-08-24",
-      hora: "10:00",
-      dueño: "Leonel Montecinos",
-      mascota: "Max",
-      doctor: "Dr. Eduardo Matamoros",
-      motivo: "Consulta general",
-      estado: "Programada",
-    },
-    {
-      id: 2,
-      fecha: "2025-08-24",
-      hora: "11:00",
-      dueño: "Jose David Martinez",
-      mascota: "Luna",
-      doctor: "Dr. Leonel Matamoros",
-      motivo: "Vacunación",
-      estado: "Programada",
-    },
-  ];
-
-  const [citas, setCitas] = useState(() => {
-    const saved = localStorage.getItem("citas");
-    return saved ? JSON.parse(saved) : ejemplos;
-  });
-
+  const [citas, setCitas] = useState([]);
+  const [owners, setOwners] = useState([]);
+  const [pets, setPets] = useState([]);
+  const [vets, setVets] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
+
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflictData, setConflictData] = useState(null);
+
   const [nuevaCita, setNuevaCita] = useState({
+    ownerId: "",
+    petId: "",
+    vetId: "",
+    motivo: "",
     fecha: "",
     hora: "",
-    dueño: "",
-    mascota: "",
-    doctor: "",
-    motivo: "",
-    estado: "Programada",
+    estado: "programada",
   });
+
   const [mensaje, setMensaje] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [citaAEliminar, setCitaAEliminar] = useState(null);
 
-  // Listas de opciones
-  const dueñosDisponibles = ["Leonel Montecinos", "Jose David Martinez", "Ana López", "Carlos Ramírez"];
-  const mascotasDisponibles = ["Max", "Luna", "Toby", "Misha"];
-  const doctoresDisponibles = [
-    "Dra. Maria González - Medicina General",
-    "Dr. Carlos Rodríguez - Cirugía",
-    "Dra. Ana López - Dermatología",
-    "Dr. Jorge Martínez - Cardiología",
-    "Dra. Laura Hernández - Oftalmología",
-    "Dr. Roberto Silva - Traumatología",
-    "Dra. Patricia Morales - Neurología",
-    "Dr. Fernando Castro - Medicina Interna",
-    "Dra. Sofía Vargas - Reproducción",
-    "Dr. Miguel Torres - Medicina Felina",
-  ];
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
+  const [showCancelarModal, setShowCancelarModal] = useState(false);
+  const [citaCancelar, setCitaCancelar] = useState(null);
+
+  const [showAllToday, setShowAllToday] = useState(false); // Para "Ver todas" citas hoy
+
+  /* ============================
+     CARGAS INICIALES
+  ============================ */
   useEffect(() => {
-    localStorage.setItem("citas", JSON.stringify(citas));
-  }, [citas]);
+    loadAppointments();
+    loadOwners();
+    loadVets();
+  }, []);
 
-  function handleChange(e) {
-    setNuevaCita({ ...nuevaCita, [e.target.name]: e.target.value });
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (editId !== null) {
-      setCitas(citas.map((c) => (c.id === editId ? { ...nuevaCita, id: editId } : c)));
-      setMensaje("Cita editada con éxito");
-      setEditId(null);
-    } else {
-      setCitas([...citas, { ...nuevaCita, id: Date.now() }]);
-      setMensaje("Cita programada con éxito");
+  const loadAppointments = async () => {
+    try {
+      const data = await getAppointments();
+      setCitas(data);
+    } catch (err) {
+      console.error("Error cargando citas:", err);
     }
+  };
 
-    setNuevaCita({
-      fecha: "",
-      hora: "",
-      dueño: "",
-      mascota: "",
-      doctor: "",
-      motivo: "",
-      estado: "Programada",
+  const loadOwners = async () => {
+    try {
+      const data = await getOwners();
+      setOwners(data);
+    } catch (err) {
+      console.error("Error cargando dueños:", err);
+    }
+  };
+
+  const loadVets = async () => {
+    try {
+      const data = await getUsers();
+      setVets(data.filter((u) => u.role === "veterinario"));
+    } catch (err) {
+      console.error("Error cargando doctores:", err);
+    }
+  };
+
+  const handleOwnerChange = async (ownerId) => {
+    setNuevaCita({ ...nuevaCita, ownerId, petId: "" });
+    if (!ownerId) {
+      setPets([]);
+      return;
+    }
+    try {
+      const data = await getPets();
+      const filtered = data.filter((p) => p.ownerId?._id === ownerId);
+      setPets(filtered);
+    } catch (err) {
+      console.error("Error cargando mascotas:", err);
+    }
+  };
+
+  /* ============================
+     GUARDAR / EDITAR CITAS
+  ============================ */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const fechaSeleccionada = nuevaCita.fecha;
+    const [year, month, day] = fechaSeleccionada.split("-");
+    const fechaLocal = `${year}-${month}-${day}`;
+    const horaLocal = nuevaCita.hora;
+
+    const conflicto = citas.find((c) => {
+      const vetIdCita = c.vetId?._id || c.vetId;
+      const vetIdNueva = nuevaCita.vetId;
+      return (
+        String(vetIdCita) === String(vetIdNueva) &&
+        (c.fecha === fechaLocal || c.fecha?.split("T")[0] === fechaLocal) &&
+        c.hora === horaLocal &&
+        (!editId || c._id !== editId)
+      );
     });
 
-    cerrarModal();
-    setTimeout(() => setMensaje(""), 3000);
-  }
+    if (conflicto) {
+      setConflictData(conflicto);
+      setShowConflictModal(true);
+      return;
+    }
 
-  function handleEditar(cita) {
-    setNuevaCita(cita);
-    setEditId(cita.id);
+    await guardarCita(fechaLocal, horaLocal);
+  };
+
+  const guardarCita = async (fecha, hora) => {
+    try {
+      const citaAEnviar = { ...nuevaCita, fecha, hora };
+      if (editId) {
+        await updateAppointment(editId, citaAEnviar);
+        setMensaje("Cita editada con éxito");
+      } else {
+        await createAppointment(citaAEnviar);
+        setSuccessMessage("Cita programada con éxito");
+        setShowSuccessModal(true);
+      }
+      await loadAppointments();
+      cerrarModal();
+      setTimeout(() => setMensaje(""), 3000);
+      setTimeout(() => setShowSuccessModal(false), 2500);
+    } catch (err) {
+      console.error("Error guardando cita:", err);
+      setMensaje(err.message || "Error al guardar la cita");
+      setTimeout(() => setMensaje(""), 4000);
+    }
+  };
+
+  /* ============================
+     EDICIÓN / ELIMINACIÓN
+  ============================ */
+  const handleEditar = (cita) => {
+    const fecha = cita.fecha?.includes("T") ? cita.fecha.split("T")[0] : cita.fecha;
+    setNuevaCita({
+      ownerId: cita.ownerId?._id,
+      petId: cita.petId?._id,
+      vetId: cita.vetId?._id,
+      motivo: cita.motivo,
+      fecha,
+      hora: cita.hora,
+      estado: cita.estado,
+    });
+    setEditId(cita._id);
+    setPets(cita.ownerId ? [cita.petId] : []);
     setShowModal(true);
-  }
+  };
 
-  function confirmarEliminar(cita) {
+  const confirmarEliminar = (cita) => {
     setCitaAEliminar(cita);
     setShowConfirmModal(true);
-  }
+  };
 
-  function handleEliminarConfirmado() {
-    if (citaAEliminar) {
-      setCitas(citas.filter((c) => c.id !== citaAEliminar.id));
-      setMensaje(`Cita de ${citaAEliminar.dueño} eliminada con éxito`);
+  const handleEliminarConfirmado = async () => {
+    try {
+      await deleteAppointment(citaAEliminar._id);
+      setMensaje("Cita eliminada con éxito");
+      await loadAppointments();
+      cerrarConfirmModal();
       setTimeout(() => setMensaje(""), 3000);
-    }
-    cerrarConfirmModal();
-  }
-
-  function handleCancelarEliminar() {
-    cerrarConfirmModal();
-  }
-
-  const citasFiltradas = citas.filter((cita) =>
-    [cita.dueño, cita.mascota, cita.doctor, cita.motivo]
-      .join(" ")
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
-
-  const getColorFondo = (estado) => {
-    switch (estado) {
-      case "Programada": return "#ADD8E6";
-      case "Completada": return "#d4edda";
-      case "Cancelada": return "#f8d7da";
-      default: return "white";
+    } catch (err) {
+      console.error("Error eliminando cita:", err);
+      setMensaje("Error eliminando cita");
     }
   };
 
-  const getColorTexto = (estado) => {
-    switch (estado) {
-      case "Programada": return "#004085";
-      case "Completada": return "#155724";
-      case "Cancelada": return "#721c24";
-      default: return "#000";
+  /* ============================
+     CAMBIAR ESTADO CON MODALES 
+  ============================ */
+  const confirmarCancelar = async () => {
+    if (!citaCancelar) return;
+    try {
+      await updateAppointment(citaCancelar._id, { estado: "cancelada" });
+      await loadAppointments();
+      setShowCancelarModal(false);
+      setSuccessMessage(
+        `La cita de ${citaCancelar.ownerId?.full_name} para su mascota ${citaCancelar.petId?.nombre} fue cancelada con éxito.`
+      );
+      setShowSuccessModal(true);
+      setTimeout(() => setShowSuccessModal(false), 2500);
+      setCitaCancelar(null);
+    } catch (err) {
+      console.error("Error al cancelar cita:", err);
+      setMensaje("Error al cancelar la cita");
+      setTimeout(() => setMensaje(""), 4000);
     }
   };
 
-  // Función para cerrar modal con animación y limpiar estados
+  /* ============================
+     MODALES AUXILIARES
+  ============================ */
   const cerrarModal = () => {
     setShowModal(false);
     setEditId(null);
     setNuevaCita({
+      ownerId: "",
+      petId: "",
+      vetId: "",
+      motivo: "",
       fecha: "",
       hora: "",
-      dueño: "",
-      mascota: "",
-      doctor: "",
-      motivo: "",
-      estado: "Programada",
+      estado: "programada",
     });
+    setPets([]);
   };
 
   const cerrarConfirmModal = () => {
@@ -165,6 +240,50 @@ function Citas() {
     setCitaAEliminar(null);
   };
 
+  const cerrarConflictModal = () => {
+    setShowConflictModal(false);
+    setConflictData(null);
+  };
+
+  const continuarDeTodosModos = async () => {
+    setShowConflictModal(false);
+    await guardarCita(nuevaCita.fecha, nuevaCita.hora);
+  };
+
+  /* ============================
+     FORMATO DE DATOS
+  ============================ */
+  const citasFiltradas = citas.filter((cita) =>
+    [cita.ownerId?.full_name, cita.petId?.nombre, cita.vetId?.full_name, cita.motivo]
+      .join(" ")
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+
+  const citasHoy = citas.filter(
+    (cita) =>
+      cita.fecha?.split("T")[0] === new Date().toISOString().split("T")[0] &&
+      cita.estado === "programada"
+  );
+
+  const mostrarFecha = (fecha) => {
+    if (!fecha) return "";
+    if (fecha.includes("T")) return fecha.split("T")[0];
+    return fecha;
+  };
+
+  const formatearHora = (hora) =>
+    hora
+      ? new Date(`1970-01-01T${hora}`).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
+      : "";
+
+  /* ============================
+     INTERFAZ
+  ============================ */
   return (
     <div className="citas-container">
       <div className="citas-header">
@@ -175,22 +294,7 @@ function Citas() {
           </h1>
           <h4 className="Citas-subtitulo">Gestión de Citas Médicas</h4>
         </div>
-        <button
-          className="btn-nueva-cita"
-          onClick={() => {
-            setEditId(null);
-            setNuevaCita({
-              fecha: "",
-              hora: "",
-              dueño: "",
-              mascota: "",
-              doctor: "",
-              motivo: "",
-              estado: "Programada",
-            });
-            setShowModal(true);
-          }}
-        >
+        <button className="btn-nueva-cita" onClick={() => setShowModal(true)}>
           + Nueva Cita
         </button>
       </div>
@@ -207,6 +311,7 @@ function Citas() {
         />
       </div>
 
+      {/* ===== TABLA PRINCIPAL ===== */}
       <table className="citas-table">
         <thead>
           <tr>
@@ -221,37 +326,49 @@ function Citas() {
         </thead>
         <tbody>
           {citasFiltradas.map((cita) => (
-            <tr key={cita.id}>
+            <tr key={cita._id}>
               <td>
-                <div className="fecha-hora">
-                  <span>{cita.fecha}</span>
-                  <br />
-                  <span className="hora">{cita.hora}</span>
-                </div>
+                {mostrarFecha(cita.fecha)} {formatearHora(cita.hora)}
               </td>
-              <td>{cita.dueño}</td>
-              <td>{cita.mascota}</td>
-              <td>{cita.doctor}</td>
+              <td>{cita.ownerId?.full_name}</td>
+              <td>{cita.petId?.nombre}</td>
+              <td>{cita.vetId?.full_name}</td>
               <td>{cita.motivo}</td>
               <td>
                 <select
                   value={cita.estado}
-                  onChange={(e) =>
-                    setCitas(
-                      citas.map((c) =>
-                        c.id === cita.id ? { ...c, estado: e.target.value } : c
-                      )
-                    )
-                  }
-                  style={{
-                    backgroundColor: getColorFondo(cita.estado),
-                    color: getColorTexto(cita.estado),
+                  onChange={async (e) => {
+                    try {
+                      const nuevoEstado = e.target.value;
+
+                      if (nuevoEstado === "cancelada") {
+                        setCitaCancelar(cita);
+                        setShowCancelarModal(true);
+                        return;
+                      }
+
+                      await updateAppointment(cita._id, { estado: nuevoEstado });
+                      await loadAppointments();
+
+                      if (nuevoEstado === "programada") {
+                        setSuccessMessage("Cita programada con éxito");
+                        setShowSuccessModal(true);
+                      } else if (nuevoEstado === "completada") {
+                        setSuccessMessage("Cita completada con éxito");
+                        setShowSuccessModal(true);
+                      }
+
+                      setTimeout(() => setShowSuccessModal(false), 2500);
+                    } catch (err) {
+                      setMensaje(err.message || "Error al actualizar estado");
+                      setTimeout(() => setMensaje(""), 4000);
+                    }
                   }}
-                  className="estado-select"
+                  className={`estado-select ${cita.estado.toLowerCase()}`}
                 >
-                  <option value="Programada">Programada</option>
-                  <option value="Completada">Completada</option>
-                  <option value="Cancelada">Cancelada</option>
+                  <option value="programada">Programada</option>
+                  <option value="completada">Completada</option>
+                  <option value="cancelada">Cancelada</option>
                 </select>
               </td>
               <td className="acciones">
@@ -267,33 +384,58 @@ function Citas() {
         </tbody>
       </table>
 
-      {/* Modal de Nueva/Editar Cita */}
+      {/* ================= MODALES ================= */}
+
+      {/* Modal Nueva / Editar Cita */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
-            <h3>{editId !== null ? "Editar Cita" : "Nueva Cita"}</h3>
+            <h3>{editId ? "Editar Cita" : "Nueva Cita"}</h3>
             <form onSubmit={handleSubmit}>
+              {/* … Aquí va todo tu formulario de nueva/editar cita tal cual lo tenías */}
               <label>Dueño</label>
-              <select name="dueño" value={nuevaCita.dueño} onChange={handleChange} required>
+              <select
+                name="ownerId"
+                value={nuevaCita.ownerId}
+                onChange={(e) => handleOwnerChange(e.target.value)}
+                required
+              >
                 <option value="">Seleccionar dueño</option>
-                {dueñosDisponibles.map((d) => (
-                  <option key={d} value={d}>{d}</option>
+                {owners.map((o) => (
+                  <option key={o._1?._id ?? o._id} value={o._id}>
+                    {o.full_name}
+                  </option>
                 ))}
               </select>
 
               <label>Mascota</label>
-              <select name="mascota" value={nuevaCita.mascota} onChange={handleChange} required>
+              <select
+                name="petId"
+                value={nuevaCita.petId}
+                onChange={(e) => setNuevaCita({ ...nuevaCita, petId: e.target.value })}
+                disabled={!nuevaCita.ownerId}
+                required
+              >
                 <option value="">Seleccionar mascota</option>
-                {mascotasDisponibles.map((m) => (
-                  <option key={m} value={m}>{m}</option>
+                {pets.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.nombre}
+                  </option>
                 ))}
               </select>
 
               <label>Doctor</label>
-              <select name="doctor" value={nuevaCita.doctor} onChange={handleChange} required>
+              <select
+                name="vetId"
+                value={nuevaCita.vetId}
+                onChange={(e) => setNuevaCita({ ...nuevaCita, vetId: e.target.value })}
+                required
+              >
                 <option value="">Seleccionar médico</option>
-                {doctoresDisponibles.map((doc) => (
-                  <option key={doc} value={doc}>{doc}</option>
+                {vets.map((v) => (
+                  <option key={v._id} value={v._id}>
+                    {v.full_name}
+                  </option>
                 ))}
               </select>
 
@@ -301,21 +443,40 @@ function Citas() {
               <input
                 type="text"
                 name="motivo"
-                placeholder="Motivo de la cita"
                 value={nuevaCita.motivo}
-                onChange={handleChange}
+                onChange={(e) => setNuevaCita({ ...nuevaCita, motivo: e.target.value })}
                 required
               />
 
               <label>Fecha</label>
-              <input type="date" name="fecha" value={nuevaCita.fecha} onChange={handleChange} required />
+              <div className="input-icon-wrapper">
+                <CalendarDays className="input-icon" size={18} />
+                <input
+                  type="date"
+                  name="fecha"
+                  value={nuevaCita.fecha}
+                  onChange={(e) => setNuevaCita({ ...nuevaCita, fecha: e.target.value })}
+                  required
+                />
+              </div>
 
               <label>Hora</label>
-              <input type="time" name="hora" value={nuevaCita.hora} onChange={handleChange} required />
+              <div className="input-icon-wrapper">
+                <Clock className="input-icon" size={18} />
+                <input
+                  type="time"
+                  name="hora"
+                  min="08:00"
+                  max="18:00"
+                  value={nuevaCita.hora}
+                  onChange={(e) => setNuevaCita({ ...nuevaCita, hora: e.target.value })}
+                  required
+                />
+              </div>
 
               <div className="modal-buttons">
                 <button type="submit" className="btn-guardar">
-                  {editId !== null ? "Guardar Cambios" : "Guardar"}
+                  {editId ? "Guardar Cambios" : "Guardar"}
                 </button>
                 <button type="button" className="btn-cancelar" onClick={cerrarModal}>
                   Cancelar
@@ -326,24 +487,81 @@ function Citas() {
         </div>
       )}
 
-      {/* Modal de Confirmar Eliminación */}
+      {/* Modal conflicto */}
+      {showConflictModal && (
+        <div className="modal-overlay">
+          <div className="modal modal-conflicto">
+            <AlertTriangle color="#f59e0b" size={42} />
+            <h3>Conflicto de horario</h3>
+            <p>
+              El médico <strong>{conflictData.vetId?.full_name}</strong> ya tiene
+              una cita el <strong>{mostrarFecha(conflictData.fecha)}</strong> a las{" "}
+              <strong>{formatearHora(conflictData.hora)}</strong>.
+            </p>
+            <p>¿Deseas reagendar o continuar de todos modos?</p>
+            <div className="modal-buttons">
+              <button className="btn-guardar" onClick={continuarDeTodosModos}>
+                Continuar de todos modos
+              </button>
+              <button className="btn-cancelar" onClick={cerrarConflictModal}>
+                Reagendar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal confirmación eliminación */}
       {showConfirmModal && (
         <div className="modal-overlay">
           <div className="modal">
             <h3>Confirmar Eliminación</h3>
-            <p>¿Seguro que quieres eliminar la cita de {citaAEliminar?.dueño}?</p>
+            <p>¿Seguro que deseas eliminar esta cita?</p>
             <div className="modal-buttons">
               <button className="btn-guardar" onClick={handleEliminarConfirmado}>
                 Sí, eliminar
               </button>
-              <button className="btn-cancelar" onClick={handleCancelarEliminar}>
-                Cancelar
+              <button className="btn-cancelar" onClick={cerrarConfirmModal}>
+                No
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal cancelar cita */}
+      {showCancelarModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Cancelar cita</h3>
+            <p>
+              ¿Seguro que desea cancelar la cita de{" "}
+              <strong>{citaCancelar?.ownerId?.full_name}</strong> para su mascota{" "}
+              <strong>{citaCancelar?.petId?.nombre}</strong>?
+            </p>
+            <div className="modal-buttons">
+              <button className="btn-cancelar" onClick={() => setShowCancelarModal(false)}>
+                No
+              </button>
+              <button className="btn-guardar" onClick={confirmarCancelar}>
+                Sí, cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal éxito */}
+      {showSuccessModal && (
+        <div className="modal-overlay">
+          <div className="modal modal-success">
+            <CheckCircle className="check-icon" size={40} color="#4CAF50" />
+            <span>{successMessage}</span>
           </div>
         </div>
       )}
     </div>
   );
 }
+
 export default Citas;

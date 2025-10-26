@@ -215,3 +215,137 @@
   from { opacity: 1; transform: translateY(0) scale(1); } /* Estado inicial: visible en su posición */
   to { opacity: 0; transform: translateY(-10px) scale(0.985); } /* Estado final: ligeramente desplazada y semitransparente */
 } /* Cierre de @keyframes modalSlideOut */
+
+/* === Campos de contraseña con botón de ojo === */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pw-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  transition: color 0.2s;
+}
+
+.pw-toggle-btn:hover {
+  color: #0ea5e9;
+}
+
+/* === Animación de logo al éxito === */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin-logo {
+  animation: spin 1.6s ease-in-out;
+}
+
+/* === Botones elegantes para enlaces secundarios === */
+.elegant-link {
+  color: #0284c7;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s, transform 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.elegant-link:hover {
+  color: #0ea5e9;
+  transform: translateY(-1px);
+}
+
+.login-desc {
+  color: #475569;
+  text-align: center;
+  margin-bottom: 0.8rem;
+  font-size: 0.95rem;
+}
+
+/* === ESTILO VISUAL PARA CÓDIGO OTP (4 DÍGITOS) === */
+.login-wrapper .login-input[placeholder*="Código OTP"] {
+  letter-spacing: 12px; /* separa los dígitos */
+  text-align: center; /* centra el texto */
+  font-size: 1.4rem; /* agranda el tamaño del número */
+  font-weight: 600; /* números más notorios */
+  color: #1e293b; /* tono gris azulado fuerte */
+  border: 2px solid #06b6d4; /* borde cian */
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.login-wrapper .login-input[placeholder*="Código OTP"]:focus {
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25);
+  border-color: #0ea5e9;
+}
+
+.login-wrapper .login-input[placeholder*="Código OTP"]::placeholder {
+  letter-spacing: normal;
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+/* Efecto de entrada del campo OTP */
+@keyframes popInput {
+  from {
+    transform: scale(0.96);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.login-wrapper .login-input[placeholder*="Código OTP"] {
+  animation: popInput 0.25s ease-in-out;
+}
+
+/* === Campos de contraseña con botón de ojo === */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%; /* ✅ el contenedor siempre ocupa todo el ancho */
+}
+
+.password-wrapper .login-input {
+  flex: 1; /* ✅ el input se expande dentro del flex container */
+  width: 100%; /* refuerzo para compatibilidad */
+  padding-right: 2.5rem; /* ✅ deja espacio interno para el icono del ojo */
+  box-sizing: border-box;
+}
+
+.pw-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  transition: color 0.2s, transform 0.2s;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pw-toggle-btn:hover {
+  color: #0ea5e9;
+  transform: translateY(-50%) scale(1.1); /* sutil efecto hover */
+}
