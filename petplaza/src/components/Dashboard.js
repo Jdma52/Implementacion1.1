@@ -20,7 +20,6 @@ const Dashboard = () => {
   const [pulse, setPulse] = useState(false);
   const [userRole, setUserRole] = useState("");
 
-  // 🔹 Recuperar el rol del usuario al cargar el dashboard
   useEffect(() => {
     const role = localStorage.getItem("role");
     if (role) {
@@ -28,7 +27,6 @@ const Dashboard = () => {
     }
   }, []);
 
-  // 🔹 Cargar datos del dashboard
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
@@ -59,14 +57,12 @@ const Dashboard = () => {
     };
 
     fetchDashboard();
-    const interval = setInterval(fetchDashboard, 180000); // cada 3 minutos
+    const interval = setInterval(fetchDashboard, 180000);
     return () => clearInterval(interval);
   }, []);
 
-  // 🔹 Spinner de carga
   const Spinner = () => <div className="spinner"></div>;
 
-  // 🔹 Formatear fecha + hora local de Honduras (corrige desfase UTC)
   const formatLocalDateTime = (fecha, hora) => {
     try {
       if (!fecha) return "Sin fecha";
@@ -96,7 +92,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-module">
-      {/* Encabezado */}
       <div className="dashboard-header fade-in">
         <h1>
           Bienvenido, {userRole ? `${userRole} PetPlaza` : "Usuario PetPlaza"}
@@ -104,96 +99,63 @@ const Dashboard = () => {
         <p>Resumen del sistema de gestión veterinaria</p>
       </div>
 
-      {/* Tarjetas de estadísticas */}
       <div className={`stats-grid ${pulse ? "pulse" : ""}`}>
-        {/* Dueños */}
         <div className="stats-card card-hover fade-in">
           <div>
             <p className="stats-number">{loading ? <Spinner /> : stats.owners}</p>
             <p className="stats-label">Dueños Registrados</p>
           </div>
           <div className="icon bg-blue">
-            <img
-              src={duenoDeUnaMascota}
-              alt="Dueños"
-              style={{ width: 32, height: 32 }}
-            />
+            <img src={duenoDeUnaMascota} alt="Dueños" style={{ width: 32, height: 32 }} />
           </div>
         </div>
 
-        {/* Mascotas */}
         <div className="stats-card card-hover fade-in">
           <div>
             <p className="stats-number">{loading ? <Spinner /> : stats.pets}</p>
             <p className="stats-label">Mascotas Registradas</p>
           </div>
           <div className="icon bg-green">
-            <img
-              src={huellasDeGarras}
-              alt="Mascotas"
-              style={{ width: 32, height: 32 }}
-            />
+            <img src={huellasDeGarras} alt="Mascotas" style={{ width: 32, height: 32 }} />
           </div>
         </div>
 
-        {/* Citas */}
         <div className="stats-card card-hover fade-in">
           <div>
-            <p className="stats-number">
-              {loading ? <Spinner /> : stats.appointments}
-            </p>
+            <p className="stats-number">{loading ? <Spinner /> : stats.appointments}</p>
             <p className="stats-label">Citas Programadas</p>
           </div>
           <div className="icon bg-purple">
-            <img
-              src={veterinario}
-              alt="Citas"
-              style={{ width: 32, height: 32 }}
-            />
+            <img src={veterinario} alt="Citas" style={{ width: 32, height: 32 }} />
           </div>
         </div>
 
-        {/* Stock bajo */}
         <div className="stats-card card-hover fade-in">
           <div>
-            <p className="stats-number">
-              {loading ? <Spinner /> : stats.lowStock}
-            </p>
+            <p className="stats-number">{loading ? <Spinner /> : stats.lowStock}</p>
             <p className="stats-label">Stock Bajo</p>
           </div>
           <div className="icon bg-red">
-            <img
-              src={advertencia}
-              alt="Stock Bajo"
-              style={{ width: 32, height: 32 }}
-            />
+            <img src={advertencia} alt="Stock Bajo" style={{ width: 32, height: 32 }} />
           </div>
         </div>
       </div>
 
-      {/* Listas */}
       <div className="lists-grid fade-in">
         {/* Citas Recientes */}
         <div className="card card-hover">
           <h2>Citas Recientes</h2>
-          <ul>
+          <ul className="scroll-list">
             {loading ? (
               <li className="list-spinner">
                 <Spinner /> Cargando citas...
               </li>
             ) : recentAppointments.length > 0 ? (
-              recentAppointments.slice(0, 3).map((appointment) => (
+              recentAppointments.map((appointment) => (
                 <li key={appointment._id} className="list-item list-hover">
-                  <img
-                    src={veterinario}
-                    alt="Cita"
-                    className="list-icon"
-                    style={{ width: 16, height: 16 }}
-                  />
+                  <img src={veterinario} alt="Cita" className="list-icon" style={{ width: 16, height: 16 }} />
                   <div>
-                    <p className="font-medium">
-                      {appointment.ownerId?.full_name || "Dueño desconocido"}
-                    </p>
+                    <p className="font-medium">{appointment.ownerId?.full_name || "Dueño desconocido"}</p>
                     <p className="text-sm">
                       {appointment.petId?.nombre || "Mascota desconocida"} —{" "}
                       {formatLocalDateTime(appointment.fecha, appointment.hora)}
@@ -207,34 +169,25 @@ const Dashboard = () => {
           </ul>
         </div>
 
-        {/* Stock Bajo */}
+        {/* Artículos con Stock Bajo */}
         <div className="card card-hover">
           <h2>Artículos con Stock Bajo</h2>
-          <ul>
+          <ul className="scroll-list">
             {loading ? (
               <li className="list-spinner">
                 <Spinner /> Cargando productos...
               </li>
             ) : lowStockItems.length > 0 ? (
-              lowStockItems.slice(0, 5).map((item) => (
+              lowStockItems.map((item) => (
                 <li key={item._id} className="list-item list-hover">
-                  <img
-                    src={advertencia}
-                    alt="Producto"
-                    className="list-icon"
-                    style={{ width: 16, height: 16 }}
-                  />
+                  <img src={advertencia} alt="Producto" className="list-icon" style={{ width: 16, height: 16 }} />
                   <div>
                     <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-gray">
-                      Categoría: {item.category || "Sin categoría"}
-                    </p>
+                    <p className="text-sm text-gray">Categoría: {item.category || "Sin categoría"}</p>
                     <p className="text-sm text-red">
                       Stock actual: {item.quantity} / Mínimo: {item.minStock}
                     </p>
-                    <p className="text-sm">
-                      Precio: L. {item.price?.toFixed(2) || "0.00"}
-                    </p>
+                    <p className="text-sm">Precio: L. {item.price?.toFixed(2) || "0.00"}</p>
                   </div>
                 </li>
               ))

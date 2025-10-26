@@ -1,21 +1,14 @@
 .dashboard-module {
-  background: #f9fafb; 
-  padding: 2rem;      
-}
-.dashboard-module {
-  background: #f9fafb; 
-  padding: 2rem;      
-  border-radius: 0.85rem;
-  padding: 1.5rem;      
+  background: #f9fafb;
+  padding: 2rem;
   border-radius: 0.5rem;
   min-height: calc(100vh - 20px);
-  height: 100vh;              
+  height: 100vh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   overflow: hidden;
 }
-
 
 .dashboard-module .fade-in {
   opacity: 0;
@@ -24,32 +17,38 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-
 .dashboard-module .dashboard-header {
-  margin-top: -45px;     
+  margin-top: -45px;
   margin-bottom: 1rem;
   margin-right: 5rem;
   margin-inline-start: 1.5rem;
 }
+
 .dashboard-module .dashboard-header h1 {
   font-size: 1.6rem;
   font-weight: 700;
   color: #16264C;
 }
+
 .dashboard-module .dashboard-header p {
   color: #4B5563;
   margin-top: 0.3rem;
   font-size: 0.95rem;
 }
 
-
 .dashboard-module .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
   margin-bottom: 1rem;
   margin-inline-start: 1.5rem;
@@ -57,7 +56,7 @@
 
 .dashboard-module .stats-card {
   background: #fff;
-  padding: 0.75rem; 
+  padding: 0.75rem;
   border-radius: 0.85rem;
   box-shadow: 0 4px 10px rgba(0,0,0,0.06);
   display: flex;
@@ -65,58 +64,70 @@
   align-items: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
 .dashboard-module .stats-card.card-hover:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 16px rgba(0,0,0,0.12);
 }
 
 .dashboard-module .icon {
-  padding: 0.4rem; 
+  padding: 0.4rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .dashboard-module .icon svg {
   color: #fff;
-  width: 18px; 
+  width: 18px;
   height: 18px;
 }
-.dashboard-module .bg-blue { background: linear-gradient(135deg, lightblue); }
-.dashboard-module .bg-green { background: linear-gradient(135deg, #10B981, #34D399); }
-.dashboard-module .bg-purple { background: linear-gradient(#f59e0b); }
-.dashboard-module .bg-red { background: linear-gradient(135deg, #EF4444, #F87171); }
 
-
-.dashboard-module .lists-grid {
-  flex: 1;                          
-  display: flex;
-  flex-direction: row;              
-  gap: 2rem; 
-  margin-left: 1.5rem; 
-  justify-content: space-between;  
-  align-items: stretch;             
-  margin-bottom: 5rem; 
+.dashboard-module .bg-blue {
+  background: linear-gradient(135deg, lightblue);
 }
 
+.dashboard-module .bg-green {
+  background: linear-gradient(135deg, #10B981, #34D399);
+}
+
+.dashboard-module .bg-purple {
+  background: linear-gradient(#f59e0b);
+}
+
+.dashboard-module .bg-red {
+  background: linear-gradient(135deg, #EF4444, #F87171);
+}
+
+.dashboard-module .lists-grid {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  margin-left: 1.5rem;
+  justify-content: space-between;
+  align-items: stretch;
+  margin-bottom: 5rem;
+}
 
 .dashboard-module .card {
   background: #fff;
-  padding: 1rem; 
+  padding: 1rem;
   border-radius: 0.85rem;
   box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-  flex: 1;                          
+  flex: 1;
   display: flex;
-  flex-direction: column; 
-  height: 100%;                     
-  overflow: hidden; 
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
 .dashboard-module .card.card-hover:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 16px rgba(0,0,0,0.12);
 }
-
 
 .dashboard-module .card h2 {
   margin-bottom: 1rem;
@@ -124,47 +135,58 @@
   font-weight: 600;
   text-align: left;
 }
-
-
-.dashboard-module .card ul {
-  flex-grow: 1; 
-  overflow: hidden;             
-  padding: 0 0.5rem;
+.dashboard-module .card ul.scroll-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb; 
+  border-radius: 0.5rem;
+  padding: 0.5rem;
   margin: 0;
   width: 100%;
+  max-height: 250px; 
+  box-sizing: border-box;
 }
 
+.dashboard-module .card ul.scroll-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-module .card ul.scroll-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
 
 .dashboard-module .list-item {
   display: flex;
   align-items: center;
-  padding: 0.6rem; 
+  padding: 0.6rem;
   border-radius: 0.65rem;
   margin-bottom: 0.5rem;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  transition: box-shadow 0.3s ease; 
-  user-select: text; 
+  transition: box-shadow 0.3s ease;
+  user-select: text;
 }
+
 .dashboard-module .list-item.list-hover:hover {
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
-
 .dashboard-module .list-item div {
   pointer-events: auto;
-  width: calc(100% - 28px); 
+  width: calc(100% - 28px);
 }
+
 .dashboard-module .list-item div p.font-medium {
-  font-size: 1.2rem; 
+  font-size: 1.2rem;
   font-weight: 500;
 }
+
 .dashboard-module .list-item div p.text-sm {
-  font-size: 1.05rem; 
+  font-size: 1.05rem;
 }
 
-
 .dashboard-module .list-icon {
-  margin-right: 10px; 
+  margin-right: 10px;
   min-width: 24px;
   min-height: 24px;
   display: flex;
@@ -174,30 +196,31 @@
   border-radius: 50%;
   padding: 0.35rem;
 }
-.dashboard-module .list-icon.bg-blue { background: #6366F1; }
-.dashboard-module .list-icon.bg-red { background: #EF4444; }
 
+.dashboard-module .list-icon.bg-blue {
+  background: #6366F1;
+}
 
-.dashboard-module .card ul::-webkit-scrollbar {
-  display: none;
+.dashboard-module .list-icon.bg-red {
+  background: #EF4444;
 }
 
 @media (max-width: 1024px) {
   .dashboard-module .lists-grid {
     flex-direction: column;
     align-items: center;
-    margin-left: 0; 
+    margin-left: 0;
   }
+
   .dashboard-module .card {
-    max-width: 90%; 
+    max-width: 90%;
     min-height: auto;
   }
 }
 
-
 .spinner {
   border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top: 3px solid #6366F1; /* color del spinner */
+  border-top: 3px solid #6366F1;
   border-radius: 50%;
   width: 18px;
   height: 18px;
@@ -212,7 +235,6 @@
   gap: 0.5rem;
   font-size: 1rem;
 }
-
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
