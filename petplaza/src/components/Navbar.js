@@ -102,7 +102,7 @@ const Navbar = ({ user, onLogout }) => {
     const obtenerEstadoCAI = async () => {
       try {
         if (location.pathname === "/Facturacion") {
-          const res = await fetch("http://localhost:5000/api/facturas/loteActivo");
+          const res = await fetch("/api/facturas/loteActivo");
           if (!res.ok) throw new Error("Error al obtener el estado del lote CAI");
           const data = await res.json();
           if (data.alerta) {
