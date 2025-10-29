@@ -14,6 +14,7 @@ const appointmentRoutes = require("./routes/appointments");
 const dashboardRoutes = require("./routes/dashboard");
 const servicioRoutes = require("./routes/servicioRoutes");
 const facturaRoutes = require("./routes/facturaRoutes");
+const loteFacturaRoutes = require("./routes/loteFacturaRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -54,6 +55,7 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/servicios", servicioRoutes);
 app.use("/api/facturas", facturaRoutes);
+app.use("/api/lotes", loteFacturaRoutes);
 
 
 /* 
