@@ -293,3 +293,80 @@
     font-size: 12px;
   }
 }
+/* ======== ALERTA DE LOTE CAI ======== */
+.navbar-alert-container {
+  position: relative;
+}
+
+/* Ícono de campana */
+.navbar-bell {
+  position: relative;
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+.navbar-bell:hover {
+  transform: scale(1.1);
+}
+
+/* Puntos de alerta (dot) */
+.navbar-alert-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.25);
+}
+.navbar-alert-dot.bg-green-500 {
+  background: #16a34a;
+  box-shadow: 0 0 6px rgba(22, 163, 74, 0.5);
+}
+.navbar-alert-dot.bg-yellow-400 {
+  background: #facc15;
+  box-shadow: 0 0 6px rgba(250, 204, 21, 0.6);
+}
+.navbar-alert-dot.bg-red-500 {
+  background: #dc2626;
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.6);
+}
+
+/* Dropdown con detalles del CAI */
+.navbar-alert-dropdown {
+  position: absolute;
+  top: 35px;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  width: 260px;
+  padding: 0.9rem;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  animation: fadeIn 0.3s ease;
+}
+
+.navbar-alert-dropdown h4 {
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem 0;
+  color: #111827;
+  font-weight: 700;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.3rem;
+}
+
+.navbar-alert-dropdown p {
+  font-size: 0.8rem;
+  color: #374151;
+  margin: 0.25rem 0;
+  line-height: 1.2rem;
+}
+
+/* Animación leve de parpadeo para warning o expired */
+@keyframes bellPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+.text-yellow-500 .navbar-bell,
+.text-red-500 .navbar-bell {
+  animation: bellPulse 1.5s infinite;
+}
