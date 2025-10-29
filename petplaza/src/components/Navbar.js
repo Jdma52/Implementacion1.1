@@ -97,6 +97,104 @@ const Navbar = ({ user, onLogout }) => {
             )}
           </div>
         )}
+// ========== 🔔 Lógica de alerta CAI ==========
+  useEffect(() => {
+    const obtenerEstadoCAI = async () => {
+      try {
+        if (location.pathname === "/Facturacion") {
+          const res = await fetch("http://localhost:5000/api/facturas/loteActivo");
+          if (!res.ok) throw new Error("Error al obtener el estado del lote CAI");
+          const data = await res.json();
+          if (data.alerta) {
+            setAlertaCAI(data);
+          } else {
+            setAlertaCAI(null);
+          }
+        } else {
+          setAlertaCAI(null);
+        }
+      } catch (err) {
+        console.error("Error verificando CAI:", err);
+      }
+    };
+    obtenerEstadoCAI();
+  }, [location.pathname]);
+
+  // ========== Modal de cierre ==========
+  const openModal = () => {
+    setShowModal(true);
+    setIsClosing(false);
+  };
+  const closeModal = () => {
+    setIsClosing(true);
+    setTimeout(() => setShowModal(false), 300);
+  };
+  const handleLogout = () => {
+    if (typeof onLogout === "function") onLogout();
+    navigate("/");
+  };
+
+  return (
+    <div className="navbar-wrapper">
+      <header className="navbar">
+        {/* ========= 🔔 ALERTA DE LOTE CAI ========= */}
+        {location.pathname === "/Facturacion" && (
+          <div className="navbar-alert-container">
+            <button
+              className={`navbar-icon navbar-bell ${
+                alertaCAI?.alerta === "expired"
+                  ? "text-red-500"
+                  : alertaCAI?.alerta === "warning"
+                  ? "text-yellow-500"
+                  : "text-green-500"
+              }`}
+              onClick={() => setShowNotif(!showNotif)}
+              title="Estado del Lote CAI"
+            >
+              <Bell size={20} />
+
+              {/* 🔴 Dot de color según el estado */}
+              {alertaCAI?.alerta === "expired" && (
+                <span className="navbar-alert-dot bg-red-500"></span>
+              )}
+              {alertaCAI?.alerta === "warning" && (
+                <span className="navbar-alert-dot bg-yellow-400"></span>
+              )}
+              {alertaCAI?.alerta === "ok" && (
+                <span className="navbar-alert-dot bg-green-500"></span>
+              )}
+            </button>
+
+            {/* 🔽 Dropdown con detalles del lote CAI */}
+            {showNotif && alertaCAI && (
+              <div className="navbar-alert-dropdown">
+                <h4>Estado del Lote CAI</h4>
+                {alertaCAI.alerta === "expired" && (
+                  <p className="text-red-500 font-semibold">⚠️ Lote vencido</p>
+                )}
+                {alertaCAI.alerta === "warning" && (
+                  <p className="text-yellow-500 font-semibold">
+                    ⚠️ Lote próximo a vencer
+                  </p>
+                )}
+                {alertaCAI.alerta === "ok" && (
+                  <p className="text-green-600 font-semibold">🟢 Lote activo</p>
+                )}
+                <p>
+                  📄 Restantes: <strong>{alertaCAI.restantes}</strong>
+                </p>
+                <p>
+                  ⏳ Días restantes: <strong>{alertaCAI.diasRestantes}</strong>
+                </p>
+                <p>CAI: {alertaCAI.cai}</p>
+                <p>
+                  Rango: {alertaCAI.rangoDesde} → {alertaCAI.rangoHasta}
+                </p>
+                <p>Fecha límite: {new Date(alertaCAI.fechaLimite).toLocaleDateString()}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="navbar-user">
           <p className="navbar-username">{user?.full_name || "Usuario"}</p>
