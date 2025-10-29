@@ -1,16 +1,13 @@
 // facturasApi.js
-
 import axios from "axios";
-
-// Ruta base del backend (puedes ajustar el puerto si es diferente)
-const API = process.env.REACT_APP_API || "http://localhost:5000/api/facturas";
+const BASE_URL = "/api/facturas";
 
 // ===============================
-// 📦 OBTENER TODAS LAS FACTURAS
+// OBTENER TODAS LAS FACTURAS
 // ===============================
 export const getFacturas = async () => {
   try {
-    const res = await axios.get(API);
+    const res = await axios.get(BASE_URL);
     return res.data;
   } catch (error) {
     console.error("❌ Error en getFacturas:", error);
@@ -19,11 +16,11 @@ export const getFacturas = async () => {
 };
 
 // ===============================
-// 🧾 CREAR NUEVA FACTURA
+// CREAR NUEVA FACTURA
 // ===============================
 export const createFactura = async (data) => {
   try {
-    const res = await axios.post(API, data, {
+    const res = await axios.post(BASE_URL, data, {
       headers: { "Content-Type": "application/json" },
     });
     return res.data;
@@ -35,11 +32,11 @@ export const createFactura = async (data) => {
 };
 
 // ===============================
-// 🔍 OBTENER FACTURA POR ID
+// OBTENER FACTURA POR ID
 // ===============================
 export const getFacturaById = async (id) => {
   try {
-    const res = await axios.get(`${API}/${id}`);
+    const res = await axios.get(`${BASE_URL}/${id}`);
     return res.data;
   } catch (error) {
     console.error("❌ Error en getFacturaById:", error);
@@ -49,11 +46,11 @@ export const getFacturaById = async (id) => {
 };
 
 // ===============================
-// 🗑️ ELIMINAR FACTURA
+// ELIMINAR FACTURA
 // ===============================
 export const deleteFactura = async (id) => {
   try {
-    const res = await axios.delete(`${API}/${id}`);
+    const res = await axios.delete(`${BASE_URL}/${id}`);
     return res.data;
   } catch (error) {
     console.error("❌ Error en deleteFactura:", error);
@@ -63,11 +60,11 @@ export const deleteFactura = async (id) => {
 };
 
 // ===============================
-// 🔄 ACTUALIZAR ESTADO (Pagado/Pendiente)
+// ACTUALIZAR ESTADO (Pagado/Pendiente)
 // ===============================
 export const updateFacturaEstado = async (id, estado) => {
   try {
-    const res = await axios.put(`${API}/${id}/estado`, { estado });
+    const res = await axios.put(`${BASE_URL}/${id}/estado`, { estado });
     return res.data;
   } catch (error) {
     console.error("❌ Error en updateFacturaEstado:", error);
@@ -77,4 +74,21 @@ export const updateFacturaEstado = async (id, estado) => {
     throw new Error(msg);
   }
 };
+
+// ===============================
+//  ACTUALIZAR FACTURA COMPLETA
+// ===============================
+export const updateFactura = async (id, data) => {
+  try {
+    const res = await axios.put(`${BASE_URL}/${id}`, data, {
+      headers: { "Content-Type": "application/json" },
+    });
+    return res.data;
+  } catch (error) {
+    console.error("❌ Error en updateFactura:", error);
+    const msg = error.response?.data?.mensaje || "Error actualizando factura";
+    throw new Error(msg);
+  }
+};
+
 
