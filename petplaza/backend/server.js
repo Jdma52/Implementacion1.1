@@ -1,52 +1,60 @@
 // backend/server.js
+
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 
-// 📦 Rutas
-const authRoutes = require("./routes/auth");
-const userRoutes = require("./routes/users");
-const ownerRoutes = require("./routes/owners");
-const petRoutes = require("./routes/pets"); // 👈 RUTA ACTUALIZADA
-const appointmentRoutes = require("./routes/appointments");
-const dashboardRoutes = require("./routes/dashboard");
-const servicioRoutes = require("./routes/servicioRoutes");
-const facturaRoutes = require("./routes/facturaRoutes");
-const loteFacturaRoutes = require("./routes/loteFacturaRoutes");
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 /* =====================================================
-   🌐 Middleware global
+   🌐 MIDDLEWARE GLOBAL
 ===================================================== */
 app.use(cors());
 app.use(express.json());
 
 /* =====================================================
-   💾 Conexión a MongoDB
+   💾 CONEXIÓN A MONGODB (con reintento automático)
 ===================================================== */
-mongoose.set("strictQuery", true); // 🔹 Recomendado para versiones recientes
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ MongoDB conectado correctamente"))
-  .catch((err) =>
-    console.error("❌ Error conectando a MongoDB:", err.message)
-  );
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("✅ MongoDB conectado correctamente");
+  } catch (err) {
+    console.error("❌ Error conectando a MongoDB:", err.message);
+    // Render puede tardar en conectar, reintentamos cada 5s
+    setTimeout(connectDB, 5000);
+  }
+};
+
+connectDB();
 
 /* =====================================================
-   🚦 Rutas principales
+   📦 RUTAS API
+===================================================== */
+const authRoutes = require("./routes/auth");
+const userRoutes = require("./routes/users");
+const ownerRoutes = require("./routes/owners");
+const petRoutes = require("./routes/pets");
+const appointmentRoutes = require("./routes/appointments");
+const dashboardRoutes = require("./routes/dashboard");
+const servicioRoutes = require("./routes/servicioRoutes");
+const facturaRoutes = require("./routes/facturaRoutes");
+const productRoutes = require("./routes/productRoutes");
+const loteFacturaRoutes = require("./routes/loteFacturaRoutes");
+
+/* =====================================================
+   🚦 RUTAS PRINCIPALES (deben ir antes del frontend)
 ===================================================== */
 app.get("/api", (req, res) => {
   res.json({ ok: true, msg: "Backend funcionando correctamente" });
 });
 
-// 🔹 Rutas API
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/owners", ownerRoutes);
@@ -55,30 +63,29 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/servicios", servicioRoutes);
 app.use("/api/facturas", facturaRoutes);
+app.use("/api/products", productRoutes);
 app.use("/api/lotes", loteFacturaRoutes);
 
-
-/* 
-// NO BORRAR ESTO SIRVE PARA EL DESPLIEGUE -DEPLOY EN RENDER
-// ======= Servir FRONTEND (CRA) en PRODUCCIÓN =======
-if (process.env.NODE_ENV === 'production') {
-  const FE_DIR = path.join(__dirname, 'build'); // CRA
+/* =====================================================
+   🧱 SERVIR FRONTEND (para Render o Producción)
+===================================================== */
+if (process.env.NODE_ENV === "production") {
+  const FE_DIR = path.join(__dirname, "../frontend/build");
   app.use(express.static(FE_DIR));
 
-  // Fallback para SPA (Express 5 compatible)
-  app.use((req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(FE_DIR, 'index.html'));
+  // Fallback SPA (solo si no es una ruta API)
+  app.get("*", (req, res) => {
+    if (req.path.startsWith("/api")) {
+      return res.status(404).json({ mensaje: "Ruta API no encontrada" });
+    }
+    res.sendFile(path.join(FE_DIR, "index.html"));
   });
 }
-*/
-
-require("dotenv").config();
-console.log("🌍 FRONTEND_URL:", process.env.FRONTEND_URL);
 
 /* =====================================================
-   🚀 Iniciar servidor
+   🚀 INICIAR SERVIDOR
 ===================================================== */
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+  console.log("🌍 FRONTEND_URL:", process.env.FRONTEND_URL || "no definido");
 });
