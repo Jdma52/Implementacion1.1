@@ -1,41 +1,25 @@
-const BASE_URL = "http://localhost:5000/api/pets";
+// src/apis/petsApi.js
+import axios from "axios";
 
-// 📌 Obtener todas las mascotas (con filtro opcional)
-export async function getPets(filter = "") {
-  const url = filter ? `${BASE_URL}?filter=${encodeURIComponent(filter)}` : BASE_URL;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Error obteniendo mascotas");
-  return res.json();
-}
+const isLocal = typeof window !== "undefined" && window.location.hostname === "localhost";
+const BASE_URL = isLocal ? "http://localhost:5000/api/pets" : "/api/pets";
 
-// 📌 Registrar nueva mascota
-export async function createPet(petData) {
-  const res = await fetch(BASE_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(petData),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.mensaje || "Error creando mascota");
-  return data;
-}
+const api = axios.create({
+  baseURL: BASE_URL.replace("/api/pets", ""),
+  headers: { "Content-Type": "application/json" },
+});
 
-// 📌 Actualizar mascota
-export async function updatePet(id, petData) {
-  const res = await fetch(`${BASE_URL}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(petData),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.mensaje || "Error actualizando mascota");
-  return data;
-}
+export const getPets = async (filter = "") => {
+  try {
+    const url = filter ? `/api/pets?filter=${encodeURIComponent(filter)}` : "/api/pets";
+    const res = await api.get(url);
+    return Array.isArray(res.data) ? res.data : [];
+  } catch (err) {
+    console.error("❌ Error obteniendo mascotas:", err);
+    return [];
+  }
+};
 
-// 📌 Eliminar mascota
-export async function deletePet(id) {
-  const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.mensaje || "Error eliminando mascota");
-  return data;
-}
+export const createPet = async (data) => (await api.post("/api/pets", data)).data;
+export const updatePet = async (id, data) => (await api.put(`/api/pets/${id}`, data)).data;
+export const deletePet = async (id) => (await api.delete(`/api/pets/${id}`)).data;
