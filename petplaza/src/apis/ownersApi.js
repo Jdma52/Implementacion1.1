@@ -1,44 +1,24 @@
 // src/apis/ownersApi.js
-const BASE_URL = "http://localhost:5000/api/owners";
+import axios from "axios";
 
-// Obtener todos los dueños
-export async function getOwners() {
-  const res = await fetch(BASE_URL);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.mensaje || "Error obteniendo dueños");
-  return data; // [{ _id, full_name, phone, email, dni, address }]
-}
+const isLocal = typeof window !== "undefined" && window.location.hostname === "localhost";
+const BASE_URL = isLocal ? "http://localhost:5000/api/owners" : "/api/owners";
 
-// Crear nuevo dueño
-export async function createOwner(ownerData) {
-  const res = await fetch(BASE_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(ownerData),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.mensaje || "Error creando dueño");
-  return data;
-}
+const api = axios.create({
+  baseURL: BASE_URL.replace("/api/owners", ""),
+  headers: { "Content-Type": "application/json" },
+});
 
-// Actualizar dueño
-export async function updateOwner(id, ownerData) {
-  const res = await fetch(`${BASE_URL}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(ownerData),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.mensaje || "Error actualizando dueño");
-  return data;
-}
+export const getOwners = async () => {
+  try {
+    const res = await api.get("/api/owners");
+    return Array.isArray(res.data) ? res.data : [];
+  } catch (err) {
+    console.error("❌ Error obteniendo dueños:", err);
+    return [];
+  }
+};
 
-// Eliminar dueño
-export async function deleteOwner(id) {
-  const res = await fetch(`${BASE_URL}/${id}`, {
-    method: "DELETE",
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.mensaje || "Error eliminando dueño");
-  return data;
-}
+export const createOwner = async (data) => (await api.post("/api/owners", data)).data;
+export const updateOwner = async (id, data) => (await api.put(`/api/owners/${id}`, data)).data;
+export const deleteOwner = async (id) => (await api.delete(`/api/owners/${id}`)).data;
