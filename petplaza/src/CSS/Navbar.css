@@ -43,12 +43,21 @@
 
 /* ===== ANIMACIÓN PULSE ===== */
 @keyframes pulse {
-  0% { transform: scale(0.9); opacity: 0.7; }
-  50% { transform: scale(1.3); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.7; }
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
 }
 
-/* Contenedor relativo para que el dropdown*/
+/* Contenedor relativo para que el dropdown se ancle */
 .navbar-icon-wrapper {
   position: relative;
   display: inline-block;
@@ -66,18 +75,17 @@
   width: 280px;
   max-height: 220px;
   overflow-y: auto;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
   z-index: 100;
   animation: fadeIn 0.2s ease;
 }
-
 
 /* Suavizar scroll */
 .notifications-dropdown::-webkit-scrollbar {
   width: 6px;
 }
 .notifications-dropdown::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.2);
+  background-color: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
 }
 
@@ -118,7 +126,7 @@
 .navbar-wrapper .navbar-avatar {
   width: 40px;
   height: 40px;
-  background: #00b073; /* Verde por defecto (para iniciales) */
+  background: #00b073;
   color: white;
   font-weight: bold;
   font-size: 14px;
@@ -249,20 +257,40 @@
 
 /* ===== ANIMACIONES ===== */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 @keyframes zoomIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 @keyframes zoomOut {
-  from { transform: scale(1); opacity: 1; }
-  to { transform: scale(0.9); opacity: 0; }
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.9);
+    opacity: 0;
+  }
 }
 
 /* ===== RESPONSIVO ===== */
@@ -293,6 +321,7 @@
     font-size: 12px;
   }
 }
+
 /* ======== ALERTA DE LOTE CAI ======== */
 .navbar-alert-container {
   position: relative;
@@ -363,10 +392,105 @@
 
 /* Animación leve de parpadeo para warning o expired */
 @keyframes bellPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 .text-yellow-500 .navbar-bell,
 .text-red-500 .navbar-bell {
   animation: bellPulse 1.5s infinite;
+}
+/* ===== ESTILO VISUAL PARA EL PANEL DE NOTIFICACIONES UNIFICADO ===== */
+.notifications-dropdown {
+  position: absolute;
+  top: 19px;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  width: 280px;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  z-index: 120;
+  padding: 0.9rem;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Título general */
+.notifications-dropdown h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #111827;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.3rem;
+}
+
+/* Bloques internos: Citas y CAI */
+.notif-section {
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.notif-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Subtítulos (🗓️ y 📄) */
+.notif-section h5 {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #00b073;
+  margin-bottom: 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Texto de notificaciones individuales */
+.notification-item {
+  background: #fafafa;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.78rem;
+  line-height: 1.1rem;
+  color: #333;
+  transition: all 0.2s ease;
+}
+.notification-item:hover {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  transform: translateY(-1px);
+}
+
+/* Párrafos del CAI */
+.notifications-dropdown p {
+  font-size: 0.78rem;
+  color: #444;
+  margin: 0.25rem 0;
+  line-height: 1.2rem;
+}
+
+.notifications-dropdown strong {
+  color: #111;
+  font-weight: 600;
+}
+
+/* Texto vacío o sin resultados */
+.notif-empty {
+  font-size: 0.78rem;
+  color: #888;
+  padding: 0.4rem 0;
+  text-align: center;
+  font-style: italic;
 }
