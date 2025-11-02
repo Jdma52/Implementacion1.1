@@ -128,7 +128,7 @@ export default function Facturacion() {
         setServicios(ss || []);
         setProductos(prs || []);
       } catch (e) {
-        console.error(e);
+        console.error(e); 
         notify("Error cargando datos");
       } finally {
         setLoading(false);
@@ -368,7 +368,8 @@ const handleGuardarFactura = async () => {
     try {
       if (modoEdicion && facturaEditando?._id) {
         // PUT directo (frontend-only por ahora)
-        const res = await fetch(`/api/facturas/${facturaEditando._id}`, {
+        const base = window.location.hostname === "localhost" ? "http://localhost:5000" : "";
+        const res = await fetch(`${base}/api/facturas/${facturaEditando._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -443,7 +444,8 @@ const handleGuardarFactura = async () => {
   const cargarLotes = async () => {
     try {
       setLoadingLotes(true);
-      const res = await fetch("/api/lotes");
+      const base = window.location.hostname === "localhost" ? "http://localhost:5000" : "";
+      const res = await fetch(`${base}/api/lotes`);
       const data = await res.json();
       setLotes(Array.isArray(data) ? data : []);
     } catch (e) {
@@ -457,7 +459,8 @@ const handleGuardarFactura = async () => {
   const crearLote = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/lotes", {
+      const base = window.location.hostname === "localhost" ? "http://localhost:5000" : "";
+      const res = await fetch(`${base}/api/lotes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevoLote),
@@ -475,9 +478,8 @@ const handleGuardarFactura = async () => {
 
   const activarLote = async (id) => {
     try {
-      const res = await fetch(`/api/lotes/${id}/activar`, {
-        method: "PUT",
-      });
+      const base = window.location.hostname === "localhost" ? "http://localhost:5000" : "";
+      const res = await fetch(`${base}/api/lotes/${id}/activar`, { method: "PUT" });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.mensaje || "Error activando lote");
       notify("Lote activado");
@@ -519,12 +521,13 @@ const handleGuardarFactura = async () => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.setTextColor(7, 90, 60);
-    doc.text("PETPLAZA HOSPIVET", m + 100 + 8, y + 12);
+    doc.text("ALM INVESIONES SRL", m + 100 + 8, y + 12);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10.5);
     doc.setTextColor(30);
-    doc.text("Centro Médico Veterinario y Tienda de Mascotas", m + 100 + 8, y + 28);
+    doc.text(" PETPLAZA HOSPIVET", m + 100 + 8, y + 28);
     doc.text("Tegucigalpa, Ave. La Paz | Tel: +504 2242-5850", m + 100 + 8, y + 42);
+     doc.text("LEOVETEQUI@GMAIL.COM  | 0801-9016-859530", m + 100 + 8, y + 56);
 
     // Datos a la derecha
     doc.setFont("helvetica", "bold");
@@ -798,14 +801,176 @@ return (
           </tbody>
         </table>
       </div>
+      {/* =================== MODAL PREVIEW =================== */}
+{showPreview && facturaSeleccionada && (
+  <div
+    className={`facturacion-modal-overlay ${closingPreview ? "closing" : "active"}`}
+  >
+    <div
+      className={`facturacion-modal facturacion-modal-preview ${closingPreview ? "closing" : "active"}`}
+      onClick={(e) => e.stopPropagation()} // 🚫 Evita cierre al hacer clic fuera
+    >
+      <div className="facturacion-modal-header">
+        <h2>Vista Previa de Factura</h2>
+        <div style={{ display: "flex", gap: ".5rem" }}>
+          <button
+            className="facturacion-btn-secondary"
+            onClick={() => generarPDF(facturaSeleccionada)}
+          >
+            Imprimir / Descargar
+          </button>
+          <button className="facturacion-close-btn" onClick={closePreview}>
+            <X size={16} />
+          </button>
+        </div>
+      </div>
 
-      {/* =================== MODAL NUEVA/EDICIÓN =================== */}
+      {/* === Contenido de la Vista Previa === */}
+      <div className="facturacion-factura-container">
+        <div className="facturacion-factura-header">
+          <div className="facturacion-factura-empresa">
+            <h2>PetPlaza Hospivet</h2>
+            <div>Centro Médico Veterinario y Tienda de Mascotas</div>
+            <div>Tegucigalpa, Ave. La Paz | Tel: +504 2242-5850</div>
+            <div>leovetequi@gmail.com | RTN: 0801-9016-859530</div>
+          </div>
+
+          <div className="facturacion-factura-info">
+            <div style={{ fontWeight: 800, fontSize: 18 }}>FACTURA</div>
+            <div>
+              <strong>Número:</strong> {numFactura(facturaSeleccionada)}
+            </div>
+            <div>
+              <strong>Fecha:</strong>{" "}
+              {safeDate(facturaSeleccionada.fecha || facturaSeleccionada.createdAt)}
+            </div>
+            <div>
+              <strong>Estado:</strong> {facturaSeleccionada.estado}
+            </div>
+            <div>
+              <strong>Método:</strong> {facturaSeleccionada.metodoPago}
+            </div>
+          </div>
+        </div>
+
+        {/* === Bloque Fiscal === */}
+        <div className="facturacion-fiscal-box">
+          <div>
+            <strong>CAI:</strong> {facturaSeleccionada.cai}
+          </div>
+          <div>
+            <strong>Rango:</strong> {facturaSeleccionada.caiRangoDesde} a{" "}
+            {facturaSeleccionada.caiRangoHasta}
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <strong>Fecha límite:</strong>{" "}
+            {safeDate(facturaSeleccionada.caiFechaLimite)}
+          </div>
+        </div>
+
+        {/* === Datos del Cliente === */}
+        <div className="facturacion-form-row">
+          <div className="facturacion-card">
+            <h3>Datos del Cliente</h3>
+            <div>
+              <strong>Nombre:</strong> {facturaSeleccionada.cliente?.nombre}
+            </div>
+            <div>
+              <strong>Mascota:</strong> {facturaSeleccionada.mascota?.nombre}
+            </div>
+            <div>
+              <strong>RTN:</strong>{" "}
+              {facturaSeleccionada.cliente?.rtn || "No especificado"}
+            </div>
+          </div>
+          <div className="facturacion-card">
+            <h3>Información de Pago</h3>
+            <div>
+              <strong>Método de pago:</strong>{" "}
+              {facturaSeleccionada.metodoPago}
+            </div>
+          </div>
+        </div>
+
+        {/* === Tabla Detalle === */}
+        <table className="facturacion-detalles-table">
+          <thead>
+            <tr>
+              <th>Descripción</th>
+              <th>Cantidad</th>
+              <th>Precio Unitario</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(facturaSeleccionada.servicios || []).map((s, i) => (
+              <tr key={`s-${i}`}>
+                <td data-label="Descripción">{s.nombre}</td>
+                <td data-label="Cantidad">{s.cantidad}</td>
+                <td data-label="Precio Unitario">
+                  {currency(Number(s.precio ?? s.price ?? s.unitPrice ?? 0))}
+                </td>
+                <td data-label="Total">
+                  {currency(
+                    Number(s.precio ?? s.price ?? s.unitPrice ?? 0) *
+                      (s.cantidad || 0)
+                  )}
+                </td>
+              </tr>
+            ))}
+            {(facturaSeleccionada.productos || []).map((p, i) => {
+              const nombre = p.nombre ?? p.name ?? "Producto";
+              const precio = Number(p.precio ?? p.price ?? 0);
+              return (
+                <tr key={`p-${i}`}>
+                  <td data-label="Descripción">{nombre}</td>
+                  <td data-label="Cantidad">{p.cantidad}</td>
+                  <td data-label="Precio Unitario">{currency(precio)}</td>
+                  <td data-label="Total">
+                    {currency(precio * (p.cantidad || 0))}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {/* === Totales === */}
+        <div className="facturacion-factura-totales">
+          <div className="facturacion-total-row">
+            <span>Subtotal</span>
+            <strong>{currency(facturaSeleccionada.subtotal)}</strong>
+          </div>
+          {Number(facturaSeleccionada.descuentoTotal || 0) > 0 && (
+            <>
+              <div className="facturacion-total-row">
+                <span>Descuento</span>
+                <strong>{currency(facturaSeleccionada.descuentoTotal)}</strong>
+              </div>
+              <div className="facturacion-total-row">
+                <span>Base imponible</span>
+                <strong>{currency(facturaSeleccionada.baseImponible)}</strong>
+              </div>
+            </>
+          )}
+          <div className="facturacion-total-row">
+            <span>ISV (15%)</span>
+            <strong>{currency(facturaSeleccionada.impuesto)}</strong>
+          </div>
+          <div className="facturacion-total-row facturacion-grand-total">
+            <span>TOTAL</span>
+            <strong>{currency(facturaSeleccionada.total)}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* =================== MODAL NUEVA/EDICIÓN =================== */}
       {showNuevoModal && (
         <div
           className={`facturacion-modal-overlay ${closingNuevoModal ? "closing" : "active"}`}
-          onClick={(e) =>
-            e.target.classList.contains("facturacion-modal-overlay") && closeNuevoModal()
-          }
+          onClick={(e) => e.stopPropagation()} // 🚫 Evita cierre al hacer clic fuera
         >
           <div className={`facturacion-modal ${closingNuevoModal ? "closing" : "active"}`}>
             <div className="facturacion-modal-header">
@@ -826,8 +991,8 @@ return (
                     required
                   >
                     <option value="">Seleccionar dueño</option>
-                    {owners.map((o) => (
-                      <option key={o._id} value={o._id}>
+                    {owners.map((o, i) => (
+                      <option key={o._id || o.id || `owner-${i}`} value={o._id || o.id}>
                         {o.full_name || o.nombre}
                       </option>
                     ))}
@@ -844,8 +1009,8 @@ return (
                     required
                   >
                     <option value="">Seleccionar mascota</option>
-                    {mascotasDelOwner.map((p) => (
-                      <option key={p._id} value={p._id}>
+                    {mascotasDelOwner.map((p, i) => (
+                      <option key={p._id || p.id || `pet-${i}`} value={p._id || p.id}>
                         {p.nombre}
                       </option>
                     ))}
@@ -891,8 +1056,8 @@ return (
               <div className="facturacion-form-group">
                 <select onChange={(e) => e.target.value && addServicio(e.target.value)}>
                   <option value="">Seleccionar servicio</option>
-                  {servicios.map((s) => (
-                    <option key={s._id} value={s._id}>
+                  {servicios.map((s, i) => (
+                    <option key={s._id || s.id || `serv-${i}`} value={s._id || s.id}>
                       {s.nombre} — {currency(s.precio || 0)}
                     </option>
                   ))}
@@ -900,8 +1065,8 @@ return (
               </div>
 
               <div className="facturacion-items-list">
-                {formData.servicios.map((it) => (
-                  <div key={it.servicioId || it._id} className="facturacion-item-card">
+                {formData.servicios.map((it, i) => (
+                    <div key={it.servicioId || it._id || `srv-${i}`} className="facturacion-item-card">
                     <div className="facturacion-item-info">
                       <div className="facturacion-item-name">{it.nombre}</div>
                       <div className="facturacion-item-price">{currency(it.precio)}</div>
@@ -938,19 +1103,19 @@ return (
               <div className="facturacion-form-group">
                 <select onChange={(e) => e.target.value && addProducto(e.target.value)}>
                   <option value="">Seleccionar producto</option>
-                  {productos.map((p) => (
-                    <option key={p._id} value={p._id}>
-                      {p.name || p.nombre} — {currency(p.price ?? p.precio ?? 0)}
+                  {productos.map((p, i) => (
+                    <option key={p._id || p.id || `prod-${i}`} value={p._id || p.id}>
+                       {p.name || p.nombre} — {currency(p.price ?? p.precio ?? 0)}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div className="facturacion-items-list">
-                {formData.productos.map((it) => {
+                {formData.productos.map((it, i) => {
                   const precio = Number(it.precio ?? it.price ?? 0);
-                  return (
-                    <div key={it.productId || it._id} className="facturacion-item-card">
+                  return ( 
+                  <div key={it.productId || it._id || `prd-${i}`} className="facturacion-item-card">
                       <div className="facturacion-item-info">
                         <div className="facturacion-item-name">{it.nombre || it.name}</div>
                         <div className="facturacion-item-price">{currency(precio)}</div>
@@ -1041,251 +1206,215 @@ return (
         </div>
       )}
 
-      {/* =================== MODAL PREVIEW =================== */}
-      {showPreview && facturaSeleccionada && (
-        <div
-          className={`facturacion-modal-overlay ${closingPreview ? "closing" : "active"}`}
-          onClick={(e) => e.target.classList.contains("facturacion-modal-overlay") && closePreview()}
-        >
-          <div className={`facturacion-modal facturacion-modal-preview ${closingPreview ? "closing" : "active"}`}>
-            <div className="facturacion-modal-header">
-              <h2>Vista Previa de Factura</h2>
-              <div style={{ display: "flex", gap: ".5rem" }}>
-                <button className="facturacion-btn-secondary" onClick={() => generarPDF(facturaSeleccionada)}>
-                  Imprimir / Descargar
-                </button>
-                <button className="facturacion-close-btn" onClick={closePreview}>
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
+{/* =================== MODAL CONFIRM =================== */}
+{showConfirm && (
+  <div className={`facturacion-modal-overlay ${closingConfirm ? "closing" : "active"}`}>
+    <div
+      className={`facturacion-modal facturacion-confirm-modal ${closingConfirm ? "closing" : "active"}`}
+      onClick={(e) => e.stopPropagation()} // 🚫 Evita cierre al hacer clic fuera
+    >
+      <div className="facturacion-modal-header">
+        <h2>Confirmar Eliminación</h2>
+        <button className="facturacion-close-btn" onClick={closeConfirmModal}>
+          <X size={16} />
+        </button>
+      </div>
 
-            {/* Vista estilo referencia (sin logo, título grande) */}
-            <div className="facturacion-factura-container">
-              <div className="facturacion-factura-header">
-                <div className="facturacion-factura-empresa">
-                  <h2>PetPlaza Hospivet</h2>
-                  <div>Centro Médico Veterinario y Tienda de Mascotas</div>
-                  <div>Tegucigalpa, Ave. La Paz | Tel: +504 2242-5850</div>
-                </div>
-                <div className="facturacion-factura-info">
-                  <div style={{ fontWeight: 800, fontSize: 18 }}>FACTURA</div>
-                  <div><strong>Número:</strong> {numFactura(facturaSeleccionada)}</div>
-                  <div><strong>Fecha:</strong> {safeDate(facturaSeleccionada.fecha || facturaSeleccionada.createdAt)}</div>
-                  <div><strong>Estado:</strong> {facturaSeleccionada.estado}</div>
-                  <div><strong>Método:</strong> {facturaSeleccionada.metodoPago}</div>
-                </div>
-              </div>
+      <div className="facturacion-confirm-content">
+        <p>
+          ¿Eliminar la factura{" "}
+          <strong>{numFactura(facturaAEliminar)}</strong> de{" "}
+          <strong>{facturaAEliminar?.cliente?.nombre}</strong>?
+        </p>
 
-              <div className="facturacion-fiscal-box">
-                <div><strong>CAI:</strong> {facturaSeleccionada.cai}</div>
-                <div>
-                  <strong>Rango:</strong> {facturaSeleccionada.caiRangoDesde} a {facturaSeleccionada.caiRangoHasta}
-                  &nbsp;&nbsp;&nbsp;&nbsp;
-                  <strong>Fecha límite:</strong> {safeDate(facturaSeleccionada.caiFechaLimite)}
-                </div>
-              </div>
+        <div className="facturacion-confirm-actions">
+          <button
+            className="facturacion-btn-secondary"
+            onClick={closeConfirmModal}
+          >
+            Cancelar
+          </button>
+          <button
+            className="facturacion-btn-danger"
+            onClick={handleDelete}
+          >
+            Sí, eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+      {/* =================== MODAL LOTE CAI =================== */}
+{showLoteModal && (
+  <div className={`facturacion-modal-overlay ${closingLoteModal ? "closing" : "active"}`}>
+    <div
+      className={`facturacion-modal ${closingLoteModal ? "closing" : "active"}`}
+      onClick={(e) => e.stopPropagation()} // Evita cierre fuera
+    >
+      <div className="facturacion-modal-header">
+        <h2>Gestión de Lote CAI</h2>
+        <button className="facturacion-close-btn" onClick={closeLoteModal}>
+          <X size={16} />
+        </button>
+      </div>
 
-              <div className="facturacion-form-row">
-                <div className="facturacion-card">
-                  <h3>Datos del Cliente</h3>
-                  <div><strong>Nombre:</strong> {facturaSeleccionada.cliente?.nombre}</div>
-                  <div><strong>Mascota:</strong> {facturaSeleccionada.mascota?.nombre}</div>
-                  <div><strong>RTN:</strong> {facturaSeleccionada.cliente?.rtn || "No especificado"}</div>
-                </div>
-                <div className="facturacion-card">
-                  <h3>Información de Pago</h3>
-                  <div><strong>Método de pago:</strong> {facturaSeleccionada.metodoPago}</div>
-                </div>
-              </div>
-              <table className="facturacion-detalles-table">
-                <thead>
-                  <tr>
-                    <th>Descripción</th>
-                    <th>Cantidad</th>
-                    <th>Precio Unitario</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                {(facturaSeleccionada.servicios || []).map((s, i) => (
-                 <tr key={`s-${i}`}>
-                  <td data-label="Descripción">{s.nombre}</td>
-                  <td data-label="Cantidad">{s.cantidad}</td>
-                  <td data-label="Precio Unitario">{currency(Number(s.precio ?? s.price ?? s.unitPrice ?? 0))}</td>
-                  <td data-label="Total">
-                    {currency(Number(s.precio ?? s.price ?? s.unitPrice ?? 0) * (s.cantidad || 0))}
-                  </td>
-                </tr>
-              ))}
-              {(facturaSeleccionada.productos || []).map((p, i) => {
-                const nombre = p.nombre ?? p.name ?? "Producto";
-                const precio = Number(p.precio ?? p.price ?? 0);
+      {/* === HISTORIAL DE LOTES === */}
+      <div className="facturacion-form-section">
+        <h3>Historial de Lotes CAI</h3>
+        {loadingLotes ? (
+          <p>Cargando lotes...</p>
+        ) : lotes.length === 0 ? (
+          <p>No hay lotes registrados.</p>
+        ) : (
+          <table className="facturacion-table">
+            <thead>
+              <tr>
+                <th>CAI</th>
+                <th>Rango</th>
+                <th>Correlativo</th>
+                <th>Vence</th>
+                <th>Estado</th>
+                {user?.role === "admin" && <th>Acción</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {lotes.map((l) => {
+                const dias = Math.ceil(
+                  (new Date(l.fechaLimite) - new Date()) / (1000 * 60 * 60 * 24)
+                );
+                const vencido = dias <= 0;
                 return (
-                  <tr key={`p-${i}`}>
-                    <td data-label="Descripción">{nombre}</td>
-                    <td data-label="Cantidad">{p.cantidad}</td>
-                    <td data-label="Precio Unitario">{currency(precio)}</td>
-                    <td data-label="Total">{currency(precio * (p.cantidad || 0))}</td>
+                  <tr
+                    key={l._id}
+                    className={l.activo ? "lote-activo" : vencido ? "lote-vencido" : ""}
+                  >
+                    <td>{l.cai}</td>
+                    <td>
+                      {l.rangoDesde} → {l.rangoHasta}
+                    </td>
+                    <td>{l.correlativoActual}</td>
+                    <td>{safeDate(l.fechaLimite)}</td>
+                    <td>
+                      {l.activo ? (
+                        <span className="estado-lote activo">Activo</span>
+                      ) : vencido ? (
+                        <span className="estado-lote vencido">Vencido</span>
+                      ) : (
+                        <span className="estado-lote inactivo">Inactivo</span>
+                      )}
+                    </td>
+                    {user?.role === "admin" && (
+                      <td>
+                        {!l.activo && !vencido && (
+                          <button
+                            className="facturacion-btn-primary mini"
+                            onClick={() => activarLote(l._id)}
+                          >
+                            Activar
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 );
               })}
             </tbody>
-              </table>
-              <div className="facturacion-factura-totales">
-                <div className="facturacion-total-row"><span>Subtotal</span><strong>{currency(facturaSeleccionada.subtotal)}</strong></div>
-                {Number(facturaSeleccionada.descuentoTotal || 0) > 0 && (
-                  <>
-                    <div className="facturacion-total-row"><span>Descuento</span><strong>{currency(facturaSeleccionada.descuentoTotal)}</strong></div>
-                    <div className="facturacion-total-row"><span>Base imponible</span><strong>{currency(facturaSeleccionada.baseImponible)}</strong></div>
-                  </>
-                )}
-                <div className="facturacion-total-row"><span>ISV (15%)</span><strong>{currency(facturaSeleccionada.impuesto)}</strong></div>
-                <div className="facturacion-total-row facturacion-grand-total"><span>TOTAL</span><strong>{currency(facturaSeleccionada.total)}</strong></div>
+          </table>
+        )}
+      </div>
+
+      {/* === REGISTRO DE NUEVO LOTE === */}
+      {user?.role === "admin" && (
+        <div className="facturacion-form-section">
+          <h3>Registrar nuevo lote CAI</h3>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+
+              const regexCAI = /^[A-Z0-9-]{10,40}$/;
+              const regexRango = /^[0-9-]{17,19}$/;
+
+              if (!regexCAI.test(nuevoLote.cai)) {
+                notify(
+                  "⚠️ El CAI debe contener solo letras, números y guiones (10 a 40 caracteres)."
+                );
+                return;
+              }
+
+              if (
+                !regexRango.test(nuevoLote.rangoDesde) ||
+                !regexRango.test(nuevoLote.rangoHasta)
+              ) {
+                notify("⚠️ Formato de rango inválido. Use 000-001-01-00000001");
+                return;
+              }
+
+              if (nuevoLote.rangoDesde >= nuevoLote.rangoHasta) {
+                notify("⚠️ El rango final debe ser mayor que el inicial.");
+                return;
+              }
+
+              await crearLote(e);
+            }}
+          >
+            <div className="facturacion-form-group">
+              <label>CAI *</label>
+              <input
+                required
+                placeholder="Ingrese el CAI proporcionado por el SAR"
+                value={nuevoLote.cai}
+                onChange={(e) =>
+                  setNuevoLote({
+                    ...nuevoLote,
+                    cai: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""),
+                  })
+                }
+                maxLength={40}
+              />
+            </div>
+
+            <div className="facturacion-form-row">
+              <div className="facturacion-form-group">
+                <label>Rango desde *</label>
+                <input
+                  required
+                  placeholder="000-001-01-00000001"
+                  value={nuevoLote.rangoDesde}
+                  onChange={(e) =>
+                    setNuevoLote({
+                      ...nuevoLote,
+                      rangoDesde: e.target.value.replace(/[^0-9-]/g, ""),
+                    })
+                  }
+                  maxLength={19}
+                />
+              </div>
+              <div className="facturacion-form-group">
+                <label>Rango hasta *</label>
+                <input
+                  required
+                  placeholder="000-001-01-00005000"
+                  value={nuevoLote.rangoHasta}
+                  onChange={(e) =>
+                    setNuevoLote({
+                      ...nuevoLote,
+                      rangoHasta: e.target.value.replace(/[^0-9-]/g, ""),
+                    })
+                  }
+                  maxLength={19}
+                />
               </div>
             </div>
-          </div>
+
+            <button className="facturacion-btn-primary" type="submit">
+              Crear Lote
+            </button>
+          </form>
         </div>
       )}
-
-      {/* =================== MODAL CONFIRM =================== */}
-      {showConfirm && (
-        <div
-          className={`facturacion-modal-overlay ${closingConfirm ? "closing" : "active"}`}
-          onClick={(e) => e.target.classList.contains("facturacion-modal-overlay") && closeConfirmModal()}
-        >
-          <div className={`facturacion-modal facturacion-confirm-modal ${closingConfirm ? "closing" : "active"}`}>
-            <div className="facturacion-modal-header">
-              <h2>Confirmar Eliminación</h2>
-              <button className="facturacion-close-btn" onClick={closeConfirmModal}>
-                <X size={16} />
-              </button>
-            </div>
-            <div className="facturacion-confirm-content">
-              <p>
-                ¿Eliminar la factura <strong>{numFactura(facturaAEliminar)}</strong> de{" "}
-                <strong>{facturaAEliminar?.cliente?.nombre}</strong>?
-              </p>
-              <div className="facturacion-confirm-actions">
-             <button className="facturacion-btn-secondary" onClick={closeConfirmModal}>Cancelar</button>
-             <button className="facturacion-btn-danger" onClick={handleDelete}>Sí, eliminar</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =================== MODAL LOTE CAI =================== */}
-      {showLoteModal && (
-        <div
-          className={`facturacion-modal-overlay ${closingLoteModal ? "closing" : "active"}`}
-          onClick={(e) => e.target.classList.contains("facturacion-modal-overlay") && closeLoteModal()}
-        >
-          <div className={`facturacion-modal ${closingLoteModal ? "closing" : "active"}`}>
-            <div className="facturacion-modal-header">
-              <h2>Gestión de Lote CAI</h2>
-              <button className="facturacion-close-btn" onClick={closeLoteModal}>
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="facturacion-form-section">
-              <h3>Historial de Lotes CAI</h3>
-              {loadingLotes ? (
-                <p>Cargando lotes...</p>
-              ) : lotes.length === 0 ? (
-                <p>No hay lotes registrados.</p>
-              ) : (
-                <table className="facturacion-table">
-                  <thead>
-                    <tr>
-                      <th>CAI</th>
-                      <th>Rango</th>
-                      <th>Correlativo</th>
-                      <th>Vence</th>
-                      <th>Estado</th>
-                      {user?.role === "admin" && <th>Acción</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lotes.map((l) => {
-                      const dias = Math.ceil(
-                        (new Date(l.fechaLimite) - new Date()) / (1000 * 60 * 60 * 24)
-                      );
-                      const vencido = dias <= 0;
-                      return (
-                        <tr key={l._id} className={l.activo ? "lote-activo" : vencido ? "lote-vencido" : ""}>
-                          <td>{l.cai}</td>
-                          <td>{l.rangoDesde} → {l.rangoHasta}</td>
-                          <td>{l.correlativoActual}</td>
-                          <td>{safeDate(l.fechaLimite)}</td>
-                          <td>
-                            {l.activo ? (
-                              <span className="estado-lote activo">Activo</span>
-                            ) : vencido ? (
-                              <span className="estado-lote vencido">Vencido</span>
-                            ) : (
-                              <span className="estado-lote inactivo">Inactivo</span>
-                            )}
-                          </td>
-                          {user?.role === "admin" && (
-                            <td>
-                              {!l.activo && !vencido && (
-                                <button className="facturacion-btn-primary mini" onClick={() => activarLote(l._id)}>
-                                  Activar
-                                </button>
-                              )}
-                            </td>
-                          )}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            {user?.role === "admin" && (
-              <div className="facturacion-form-section">
-                <h3>Registrar nuevo lote CAI</h3>
-                <form onSubmit={crearLote}>
-                  <div className="facturacion-form-group">
-                    <label>CAI *</label>
-                    <input
-                      required
-                      placeholder="A6B3-7FQ2-91ZP-0NQK-CAI01"
-                      value={nuevoLote.cai}
-                      onChange={(e) => setNuevoLote({ ...nuevoLote, cai: e.target.value })}
-                    />
-                  </div>
-                  <div className="facturacion-form-row">
-                    <div className="facturacion-form-group">
-                      <label>Rango desde *</label>
-                      <input
-                        required
-                        placeholder="000-001-01-00000001"
-                        value={nuevoLote.rangoDesde}
-                        onChange={(e) => setNuevoLote({ ...nuevoLote, rangoDesde: e.target.value })}
-                      />
-                    </div>
-                    <div className="facturacion-form-group">
-                      <label>Rango hasta *</label>
-                      <input
-                        required
-                        placeholder="000-001-01-00005000"
-                        value={nuevoLote.rangoHasta}
-                        onChange={(e) => setNuevoLote({ ...nuevoLote, rangoHasta: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <button className="facturacion-btn-primary" type="submit">
-                    Crear Lote
-                  </button>
-                </form>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+    </div>
+  </div>
+)}
       {/* TOAST */} {showNotification && ( <div className="facturacion-notification-success show">✅ {notificationMessage}</div> )} </div>
 )}
