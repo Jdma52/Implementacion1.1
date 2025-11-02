@@ -8,8 +8,8 @@ const WORKDAY_START = "08:00";
 const WORKDAY_END = "18:00";
 
 /* =====================================================
-    Funciones auxiliares
-   ===================================================== */
+   Funciones auxiliares
+===================================================== */
 function hmToMinutes(hm) {
   const [h, m] = (hm || "").split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return null;
@@ -24,13 +24,10 @@ function isWithinWorkingHours(hora) {
   return t >= start && t < end;
 }
 
-
-
 async function hasVetConflict({ vetId, fecha, hora, excludeId = null }) {
   if (!vetId || !fecha || !hora) return false;
 
   const vetObjectId = new mongoose.Types.ObjectId(vetId);
-
   const citas = await Appointment.find({
     vetId: vetObjectId,
     fecha,
@@ -42,8 +39,8 @@ async function hasVetConflict({ vetId, fecha, hora, excludeId = null }) {
 }
 
 /* =====================================================
-    Obtener todas las citas
-   ===================================================== */
+   Obtener todas las citas
+===================================================== */
 exports.getAppointments = async (req, res) => {
   try {
     const citas = await Appointment.find()
@@ -60,8 +57,8 @@ exports.getAppointments = async (req, res) => {
 };
 
 /* =====================================================
-    Crear cita
-   ===================================================== */
+   Crear cita
+===================================================== */
 exports.createAppointment = async (req, res) => {
   try {
     let { ownerId, petId, vetId, motivo, fecha, hora } = req.body;
@@ -87,7 +84,7 @@ exports.createAppointment = async (req, res) => {
       petId,
       vetId,
       motivo,
-      fecha, 
+      fecha,
       hora,
       estado: "programada",
     });
@@ -96,17 +93,15 @@ exports.createAppointment = async (req, res) => {
     res.status(201).json(citaGuardada);
   } catch (err) {
     console.error("Error creando cita:", err);
-
     if (err.code === 11000)
       return res.status(409).json({ mensaje: "El veterinario ya tiene una cita en ese horario." });
-
     res.status(500).json({ mensaje: "Error al crear cita" });
   }
 };
 
 /* =====================================================
-    Actualizar cita
-   ===================================================== */
+   Actualizar cita
+===================================================== */
 exports.updateAppointment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -153,14 +148,13 @@ exports.updateAppointment = async (req, res) => {
     console.error("Error actualizando cita:", err);
     if (err.code === 11000)
       return res.status(409).json({ mensaje: "El veterinario ya tiene una cita en ese horario." });
-
     res.status(500).json({ mensaje: "Error actualizando cita" });
   }
 };
 
 /* =====================================================
-    Eliminar cita
-   ===================================================== */
+   Eliminar cita
+===================================================== */
 exports.deleteAppointment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -173,8 +167,8 @@ exports.deleteAppointment = async (req, res) => {
 };
 
 /* =====================================================
-    Verificar disponibilidad
-   ===================================================== */
+   Verificar disponibilidad
+===================================================== */
 exports.checkAvailability = async (req, res) => {
   try {
     const { vetId, date, hora } = req.query;
