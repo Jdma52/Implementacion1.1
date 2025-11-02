@@ -2,14 +2,12 @@ const mongoose = require("mongoose");
 const Owner = require("./Owner");
 const Pet = require("./Pet");
 
-// ======================================================
-// 📘 ESQUEMA UNIFICADO: CITAS + DASHBOARD
-// ======================================================
+//  ESQUEMA UNIFICADO: CITAS + DASHBOARD
+
 const appointmentSchema = new mongoose.Schema(
   {
-    // =============================
-    // 🔹 DATOS DE CITA
-    // =============================
+     // DATOS DE CITA
+  
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Owner",
@@ -45,7 +43,7 @@ const appointmentSchema = new mongoose.Schema(
     },
 
     // =============================
-    // 🔹 DATOS PARA DASHBOARD
+    //  DATOS PARA DASHBOARD
     // =============================
 
     // Contadores generales
@@ -69,7 +67,7 @@ const appointmentSchema = new mongoose.Schema(
       },
     ],
 
-    // Citas recientes (resumen)
+    // Citas recientes 
     recentAppointments: [
       {
         ownerId: {
@@ -105,14 +103,14 @@ const appointmentSchema = new mongoose.Schema(
 );
 
 // ======================================================
-// 🔸 ÍNDICES Y CONFIGURACIONES
+//  ÍNDICES Y CONFIGURACIONES
 // ======================================================
 appointmentSchema.index({ vetId: 1, fecha: 1, hora: 1 }, { unique: false });
 appointmentSchema.index({ generatedAt: -1 });
 
-// ======================================================
-// 🧩 FUNCIÓN DE LIMPIEZA DE CITAS HUÉRFANAS
-// ======================================================
+
+   // FUNCIÓN DE LIMPIEZA DE CITAS HUÉRFANAS
+
 async function limpiarCitasHuerfanas() {
   try {
     const Appointment = mongoose.model("Appointment");
@@ -146,7 +144,7 @@ async function limpiarCitasHuerfanas() {
 }
 
 // ======================================================
-// 🪄 Hook global: limpieza automática al iniciar el servidor
+//  Hook global: limpieza automática al iniciar el servidor
 // ======================================================
 mongoose.connection.once("open", () => {
   limpiarCitasHuerfanas(); // Limpieza inicial
@@ -155,6 +153,6 @@ mongoose.connection.once("open", () => {
 });
 
 // ======================================================
-// ✅ EXPORTACIÓN DEL MODELO UNIFICADO
+//  EXPORTACIÓN DEL MODELO UNIFICADO
 // ======================================================
 module.exports = mongoose.model("Appointment", appointmentSchema);
