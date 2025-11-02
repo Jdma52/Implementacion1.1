@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const Owner = require("./Owner");
+const Pet = require("./Pet");
 
 // ======================================================
 // 📘 ESQUEMA UNIFICADO: CITAS + DASHBOARD
@@ -6,19 +8,22 @@ const mongoose = require("mongoose");
 const appointmentSchema = new mongoose.Schema(
   {
     // =============================
-    // 🔹 SECCIÓN: DATOS DE CITA
+    // 🔹 DATOS DE CITA
     // =============================
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Owner",
+      required: true,
     },
     petId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Pet",
+      required: true,
     },
     vetId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Usuario",
+      required: true,
     },
     motivo: {
       type: String,
@@ -26,10 +31,12 @@ const appointmentSchema = new mongoose.Schema(
     },
     fecha: {
       type: String, // formato YYYY-MM-DD
+      required: true,
     },
     hora: {
       type: String, // formato HH:mm
       match: /^\d{2}:\d{2}$/,
+      required: true,
     },
     estado: {
       type: String,
@@ -38,7 +45,7 @@ const appointmentSchema = new mongoose.Schema(
     },
 
     // =============================
-    // 🔹 SECCIÓN: DATOS DE DASHBOARD
+    // 🔹 DATOS PARA DASHBOARD
     // =============================
 
     // Contadores generales
@@ -100,14 +107,54 @@ const appointmentSchema = new mongoose.Schema(
 // ======================================================
 // 🔸 ÍNDICES Y CONFIGURACIONES
 // ======================================================
-
-// índice único para evitar duplicación de citas
 appointmentSchema.index({ vetId: 1, fecha: 1, hora: 1 }, { unique: false });
-
-// índice para buscar dashboards recientes
 appointmentSchema.index({ generatedAt: -1 });
 
 // ======================================================
-// 📦 EXPORTACIÓN DEL MODELO UNIFICADO
+// 🧩 FUNCIÓN DE LIMPIEZA DE CITAS HUÉRFANAS
+// ======================================================
+async function limpiarCitasHuerfanas() {
+  try {
+    const Appointment = mongoose.model("Appointment");
+
+    // Obtener IDs válidos
+    const owners = await Owner.find({}, "_id");
+    const pets = await Pet.find({}, "_id");
+
+    const ownerIds = owners.map((o) => o._id.toString());
+    const petIds = pets.map((p) => p._id.toString());
+
+    const citas = await Appointment.find({});
+    let eliminadas = 0;
+
+    for (const cita of citas) {
+      const ownerOk = ownerIds.includes(cita.ownerId?.toString());
+      const petOk = petIds.includes(cita.petId?.toString());
+
+      if (!ownerOk || !petOk) {
+        await Appointment.findByIdAndDelete(cita._id);
+        eliminadas++;
+      }
+    }
+
+    if (eliminadas > 0) {
+      console.log(`🧹 ${eliminadas} citas huérfanas eliminadas automáticamente.`);
+    }
+  } catch (err) {
+    console.error("❌ Error limpiando citas huérfanas:", err.message);
+  }
+}
+
+// ======================================================
+// 🪄 Hook global: limpieza automática al iniciar el servidor
+// ======================================================
+mongoose.connection.once("open", () => {
+  limpiarCitasHuerfanas(); // Limpieza inicial
+  // Ejecuta cada 2 minutos para mantener la BD limpia
+  setInterval(limpiarCitasHuerfanas, 120000);
+});
+
+// ======================================================
+// ✅ EXPORTACIÓN DEL MODELO UNIFICADO
 // ======================================================
 module.exports = mongoose.model("Appointment", appointmentSchema);
