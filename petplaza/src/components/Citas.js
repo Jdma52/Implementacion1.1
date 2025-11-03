@@ -148,6 +148,10 @@ function Citas() {
         setShowSuccessModal(true);
       }
       await loadAppointments();
+
+      //  Actualiza el Navbar en tiempo real
+      window.dispatchEvent(new Event("appointment-updated"));
+
       cerrarModal();
       setTimeout(() => setMensaje(""), 3000);
       setTimeout(() => setShowSuccessModal(false), 2500);
@@ -187,6 +191,10 @@ function Citas() {
       await deleteAppointment(citaAEliminar._id);
       setMensaje("Cita eliminada con éxito");
       await loadAppointments();
+
+      // 🔹 Actualiza el Navbar en tiempo real
+      window.dispatchEvent(new Event("appointment-updated"));
+
       cerrarConfirmModal();
       setTimeout(() => setMensaje(""), 3000);
     } catch (err) {
@@ -203,6 +211,10 @@ function Citas() {
     try {
       await updateAppointment(citaCancelar._id, { estado: "cancelada" });
       await loadAppointments();
+
+      // 🔹 Actualiza el Navbar en tiempo real
+      window.dispatchEvent(new Event("appointment-updated"));
+
       setShowCancelarModal(false);
       setSuccessMessage(
         `La cita de ${citaCancelar.ownerId?.full_name} para su mascota ${citaCancelar.petId?.nombre} fue cancelada con éxito.`
@@ -350,6 +362,9 @@ function Citas() {
                       await updateAppointment(cita._id, { estado: nuevoEstado });
                       await loadAppointments();
 
+                      // Actualiza el Navbar en tiempo real
+                      window.dispatchEvent(new Event("appointment-updated"));
+
                       if (nuevoEstado === "programada") {
                         setSuccessMessage("Cita programada con éxito");
                         setShowSuccessModal(true);
@@ -392,7 +407,6 @@ function Citas() {
           <div className="modal">
             <h3>{editId ? "Editar Cita" : "Nueva Cita"}</h3>
             <form onSubmit={handleSubmit}>
-              {/* … Aquí va todo tu formulario de nueva/editar cita tal cual lo tenías */}
               <label>Dueño</label>
               <select
                 name="ownerId"
