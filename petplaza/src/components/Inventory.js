@@ -10,12 +10,12 @@ import {
 } from "lucide-react";
 import "../CSS/Inventory.css";
 
-
 import {
   getProducts,
   createProduct,
   updateProduct,
   deleteProduct,
+  registrarEntrada,
 } from "../apis/productsApi";
 
 const sanitizeIntegerString = (str) => {
@@ -41,6 +41,12 @@ const Inventory = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [closingDeleteModal, setClosingDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+
+  // Campos para registrar compra
+  const [registrarCompra, setRegistrarCompra] = useState(false);
+  const [addQty, setAddQty] = useState("");
+  const [fechaIngreso, setFechaIngreso] = useState("");
+  const [compraNota, setCompraNota] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -99,6 +105,10 @@ const Inventory = () => {
       purchaseDate: "",
       expiryDate: "",
     });
+    setRegistrarCompra(false);
+    setAddQty("");
+    setFechaIngreso("");
+    setCompraNota("");
     setShowModal(true);
     setClosingModal(false);
   };
@@ -115,6 +125,10 @@ const Inventory = () => {
       purchaseDate: item.purchaseDate ? item.purchaseDate.substring(0, 10) : "",
       expiryDate: item.expiryDate ? item.expiryDate.substring(0, 10) : "",
     });
+    setRegistrarCompra(false);
+    setAddQty("");
+    setFechaIngreso("");
+    setCompraNota("");
     setShowModal(true);
     setClosingModal(false);
   };
@@ -124,16 +138,10 @@ const Inventory = () => {
     setTimeout(() => {
       setShowModal(false);
       setEditingId(null);
-      setForm({
-        name: "",
-        category: "",
-        quantity: "",
-        price: "",
-        minStock: "",
-        provider: "",
-        purchaseDate: "",
-        expiryDate: "",
-      });
+      setRegistrarCompra(false);
+      setAddQty("");
+      setFechaIngreso("");
+      setCompraNota("");
       setClosingModal(false);
     }, 300);
   };
@@ -159,6 +167,16 @@ const Inventory = () => {
 
       if (editingId) {
         await updateProduct(editingId, payload);
+
+        // Si el usuario marcó "Registrar compra (sumar stock)"
+        if (registrarCompra && parseInt(addQty) > 0) {
+          await registrarEntrada({
+            productId: editingId,
+            cantidad: parseInt(addQty),
+            fecha: fechaIngreso || new Date().toISOString().substring(0, 10),
+            nota: compraNota || "",
+          });
+        }
       } else {
         await createProduct(payload);
       }
@@ -238,7 +256,7 @@ const Inventory = () => {
               <Stethoscope className="icon-inner" />
             </div>
             <div>
-              <h3>L. {totalValue.toFixed(2)}</h3>
+              <h3>L. {totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
               <p>Valor total</p>
             </div>
           </div>
@@ -338,15 +356,15 @@ const Inventory = () => {
             <h3>{editingId ? "Editar producto" : "Registrar nuevo producto"}</h3>
             <form className="modal-form" onSubmit={handleSave}>
               <div className="form-row">
-                <label>Nombre </label>
+                <label>Nombre</label>
                 <input name="name" value={form.name} onChange={handleChange} required />
               </div>
               <div className="form-row">
-                <label>Categoría </label>
+                <label>Categoría</label>
                 <input name="category" value={form.category} onChange={handleChange} required />
               </div>
               <div className="form-row">
-                <label>Cantidad </label>
+                <label>Cantidad</label>
                 <input
                   name="quantity"
                   type="number"
@@ -358,7 +376,7 @@ const Inventory = () => {
                 />
               </div>
               <div className="form-row">
-                <label>Precio (Lps) </label>
+                <label>Precio (Lps)</label>
                 <input
                   name="price"
                   type="number"
@@ -371,7 +389,7 @@ const Inventory = () => {
                 />
               </div>
               <div className="form-row">
-                <label>Stock mínimo </label>
+                <label>Stock mínimo</label>
                 <input
                   name="minStock"
                   type="number"
@@ -404,6 +422,56 @@ const Inventory = () => {
                   onChange={handleChange}
                 />
               </div>
+
+              {/*Sección Registrar compra (solo al editar) */}
+              {editingId && (
+                <>
+                  <div className="form-row" style={{ marginTop: 6 }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={registrarCompra}
+                        onChange={(e) => setRegistrarCompra(e.target.checked)}
+                      />
+                      Registrar compra (sumar stock)
+                    </label>
+                  </div>
+
+                  {registrarCompra && (
+                    <>
+                      <div className="form-row">
+                        <label>Cantidad a sumar (compra)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={addQty}
+                          onChange={(e) => setAddQty(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-row">
+                        <label>Fecha de ingreso</label>
+                        <input
+                          type="date"
+                          value={fechaIngreso}
+                          onChange={(e) => setFechaIngreso(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-row">
+                        <label>Nota (opcional)</label>
+                        <input
+                          type="text"
+                          value={compraNota}
+                          onChange={(e) => setCompraNota(e.target.value)}
+                          placeholder="Ej. #Factura proveedor, observaciones…"
+                        />
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
               <div className="modal-actions">
                 <button type="submit" className="inventory-btn add">
                   {editingId ? "Actualizar" : "Guardar"}
