@@ -3,11 +3,14 @@ const express = require("express");
 const router = express.Router();
 const facturaController = require("../controllers/facturaController");
 
+
+router.get("/loteActivo", facturaController.obtenerLoteActivo);
 router.get("/", facturaController.obtenerFacturas);
-router.post("/", facturaController.crearFactura);
+router.get("/:id", facturaController.obtenerFacturaPorId);
+router.post("/", facturaController.createFactura);
 router.put("/:id", facturaController.actualizarFactura);
 router.put("/:id/estado", facturaController.actualizarEstadoFactura);
-router.delete("/:id", facturaController.eliminarFactura);
-router.get("/loteActivo", facturaController.estadoLoteActivo);
+//  (Opcional) ELIMINAR FACTURA - Generalmente NO se usa en SAR Honduras
+// router.delete("/:id", facturaController.eliminarFactura);
 
 module.exports = router;
