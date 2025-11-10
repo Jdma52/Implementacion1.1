@@ -1,94 +1,118 @@
-// facturasApi.js
 import axios from "axios";
-const BASE_URL = "/api/facturas";
 
-// ===============================
-// OBTENER TODAS LAS FACTURAS
-// ===============================
+/* ==========================================================
+    CONFIGURACIÓN UNIVERSAL PARA BACKEND (Render + Local)
+========================================================== */
+
+//  Detectar si está en entorno local o Render
+const isLocal =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+   window.location.hostname === "127.0.0.1");
+
+//  URL base universal
+//  IMPORTANTE: cambia esta variable a tu URL real de Render Backend
+const RENDER_BACKEND_URL = "https://petplaza-backend.onrender.com/api";
+
+const BASE_URL = isLocal ? "http://localhost:5000/api" : RENDER_BACKEND_URL;
+
+/* ==========================================================
+    CLIENTE AXIOS BASE
+========================================================== */
+const api = axios.create({
+  baseURL: BASE_URL,
+  headers: { "Content-Type": "application/json" },
+  withCredentials: false,
+});
+
+/* ==========================================================
+    OBTENER TODAS LAS FACTURAS
+========================================================== */
 export const getFacturas = async () => {
   try {
-    const res = await axios.get(BASE_URL);
-    return res.data;
+    const res = await api.get("/facturas");
+    return Array.isArray(res.data) ? res.data : [];
   } catch (error) {
     console.error("❌ Error en getFacturas:", error);
-    throw new Error("Error obteniendo facturas");
+    return [];
   }
 };
 
-// ===============================
-// CREAR NUEVA FACTURA
-// ===============================
+/* ==========================================================
+    CREAR NUEVA FACTURA
+========================================================== */
 export const createFactura = async (data) => {
   try {
-    const res = await axios.post(BASE_URL, data, {
-      headers: { "Content-Type": "application/json" },
-    });
+    const res = await api.post("/facturas", data);
     return res.data;
   } catch (error) {
     console.error("❌ Error en createFactura:", error);
-    const msg = error.response?.data?.mensaje || "Error creando factura";
-    throw new Error(msg);
-  }
-};
-
-// ===============================
-// OBTENER FACTURA POR ID
-// ===============================
-export const getFacturaById = async (id) => {
-  try {
-    const res = await axios.get(`${BASE_URL}/${id}`);
-    return res.data;
-  } catch (error) {
-    console.error("❌ Error en getFacturaById:", error);
-    const msg = error.response?.data?.mensaje || "Error obteniendo factura";
-    throw new Error(msg);
-  }
-};
-
-// ===============================
-// ELIMINAR FACTURA
-// ===============================
-export const deleteFactura = async (id) => {
-  try {
-    const res = await axios.delete(`${BASE_URL}/${id}`);
-    return res.data;
-  } catch (error) {
-    console.error("❌ Error en deleteFactura:", error);
-    const msg = error.response?.data?.mensaje || "Error eliminando factura";
-    throw new Error(msg);
-  }
-};
-
-// ===============================
-// ACTUALIZAR ESTADO (Pagado/Pendiente)
-// ===============================
-export const updateFacturaEstado = async (id, estado) => {
-  try {
-    const res = await axios.put(`${BASE_URL}/${id}/estado`, { estado });
-    return res.data;
-  } catch (error) {
-    console.error("❌ Error en updateFacturaEstado:", error);
-    const msg =
+    const mensaje =
       error.response?.data?.mensaje ||
-      "Error actualizando el estado de la factura";
-    throw new Error(msg);
+      (error.message.includes("Network")
+        ? "Error de conexión con el servidor"
+        : "Error creando factura");
+    throw new Error(mensaje);
   }
 };
 
-// ===============================
-//  ACTUALIZAR FACTURA COMPLETA
-// ===============================
+/* ==========================================================
+    ACTUALIZAR FACTURA (solo si NO está cancelada)
+========================================================== */
 export const updateFactura = async (id, data) => {
   try {
-    const res = await axios.put(`${BASE_URL}/${id}`, data, {
-      headers: { "Content-Type": "application/json" },
-    });
+    const res = await api.put(`/facturas/${id}`, data);
     return res.data;
   } catch (error) {
     console.error("❌ Error en updateFactura:", error);
-    const msg = error.response?.data?.mensaje || "Error actualizando factura";
-    throw new Error(msg);
+    throw new Error(
+      error.response?.data?.mensaje || "Error actualizando factura"
+    );
   }
 };
 
+/* ==========================================================
+    ACTUALIZAR ESTADO (Pagado / Pendiente / Cancelado)
+========================================================== */
+export const updateFacturaEstado = async (id, estado) => {
+  try {
+    const res = await api.put(`/facturas/${id}/estado`, { estado });
+    return res.data;
+  } catch (error) {
+    console.error("❌ Error en updateFacturaEstado:", error);
+    throw new Error(
+      error.response?.data?.mensaje ||
+        "Error actualizando el estado de la factura"
+    );
+  }
+};
 
+/* ==========================================================
+    OBTENER FACTURA POR ID
+========================================================== */
+export const getFacturaById = async (id) => {
+  try {
+    const res = await api.get(`/facturas/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("❌ Error en getFacturaById:", error);
+    throw new Error(
+      error.response?.data?.mensaje || "Error obteniendo factura"
+    );
+  }
+};
+
+/* ==========================================================
+    OBTENER LOTE CAI ACTIVO (Navbar.js)
+========================================================== */
+export const getLoteActivo = async () => {
+  try {
+    const res = await api.get("/facturas/loteActivo");
+    return res.data;
+  } catch (error) {
+    console.error("❌ Error en getLoteActivo:", error);
+    throw new Error(
+      error.response?.data?.mensaje || "Error obteniendo lote activo"
+    );
+  }
+};
