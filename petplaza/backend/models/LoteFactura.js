@@ -2,9 +2,8 @@
 const mongoose = require("mongoose");
 
 /**
- * 📦 Modelo: LoteFactura
  * Representa un rango autorizado de facturas (CAI) del SAR Honduras.
- * Cada factura emitida dentro de este rango incrementa el correlativoActual.
+ * Cada factura emitida incrementa correlativoActual de este lote.
  */
 const loteFacturaSchema = new mongoose.Schema(
   {
@@ -14,14 +13,15 @@ const loteFacturaSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       minlength: 20,
-      maxlength: 40, // formato alfanumérico largo (ejemplo: 36 caracteres SAR)
+      maxlength: 40,
     },
 
     rangoDesde: {
       type: String,
       required: true,
-      match: /^\d{3}-\d{3}-\d{2}-\d{8}$/, // formato 000-001-01-00000001
+      match: /^\d{3}-\d{3}-\d{2}-\d{8}$/,
     },
+
     rangoHasta: {
       type: String,
       required: true,
@@ -42,10 +42,6 @@ const loteFacturaSchema = new mongoose.Schema(
     fechaLimite: {
       type: Date,
       required: true,
-      /**
-       * Por norma, el SAR otorga una vigencia aproximada de 10 meses al lote.
-       * Este valor se calcula automáticamente en el controlador.
-       */
     },
 
     activo: {
@@ -57,23 +53,28 @@ const loteFacturaSchema = new mongoose.Schema(
 );
 
 /**
- * 🔢 Método para obtener el siguiente número correlativo de factura.
- * Lanza error si se supera el rango autorizado.
+ * 🔄 Método: obtenerSiguienteNumero()
+ * Devuelve el siguiente número correlativo del lote,
+ * validando rango y desactivando si se excede.
  */
 loteFacturaSchema.methods.obtenerSiguienteNumero = function () {
-  const inicio = parseInt(this.rangoDesde.split("-")[3]);
-  const fin = parseInt(this.rangoHasta.split("-")[3]);
-  const actual = inicio + this.correlativoActual;
+  const inicio = parseInt(this.rangoDesde.split("-").pop());
+  const fin = parseInt(this.rangoHasta.split("-").pop());
 
-  if (actual > fin) {
-    throw new Error("❌ Se alcanzó el límite del rango autorizado del CAI activo.");
+  // Calcular correlativo real (sumar +1 para iniciar en rangoDesde + 1)
+  const correlativoReal = inicio + this.correlativoActual + 1;
+
+  // Validar límite de rango
+  if (correlativoReal > fin) {
+    this.activo = false;
+    throw new Error("Se alcanzó el límite del rango CAI autorizado.");
   }
 
+  // Incrementar correlativo y devolver número formateado
   this.correlativoActual += 1;
-  return {
-    numero: this.correlativoActual,
-    correlativoTexto: `000-001-01-${String(actual).padStart(8, "0")}`,
-  };
+
+  const correlativoTexto = `000-001-01-${String(correlativoReal).padStart(8, "0")}`;
+  return { numero: this.correlativoActual, correlativoTexto };
 };
 
 module.exports = mongoose.model("LoteFactura", loteFacturaSchema);
