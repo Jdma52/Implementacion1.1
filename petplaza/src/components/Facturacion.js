@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import "../CSS/Facturacion.css";
 import {
   FileText,
@@ -26,6 +26,18 @@ import { getOwners } from "../apis/ownersApi";
 import { getPets } from "../apis/petsApi";
 import { getServicios } from "../apis/serviciosApi";
 import { getProducts } from "../apis/productsApi";
+
+// =====================================================
+// 🌐 CONFIGURACIÓN UNIVERSAL DE BACKEND (Render + Local)
+// =====================================================
+const isLocal =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+// ⚠️ Usa tu dominio real del backend Render:
+const BACKEND_URL = isLocal
+  ? "http://localhost:5000/api"
+  : "https://petplaza-backend.onrender.com/api";
 
 export default function Facturacion() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -68,6 +80,27 @@ export default function Facturacion() {
     rangoDesde: "",
     rangoHasta: "",
   });
+  // Referencias para el menú y el botón de tres puntos
+const loteMenuRef = useRef(null);
+const loteBtnRef = useRef(null);
+
+useEffect(() => {
+  const handleClickOutside = (e) => {
+    // Si el clic no fue dentro del menú ni del botón, cierra el menú
+    if (
+      loteMenuRef.current &&
+      !loteMenuRef.current.contains(e.target) &&
+      !loteBtnRef.current.contains(e.target)
+    ) {
+      setShowLoteMenu(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
 
   // ==================== FORMULARIO NUEVA/EDICIÓN ====================
   const [formData, setFormData] = useState({
@@ -334,42 +367,52 @@ const handleGuardarFactura = async () => {
   }
 
   //  Incluimos todos los datos necesarios
-  const payload = {
-    cliente: {
-      ownerId: formData.cliente.ownerId,
-      rtn: formData.cliente.rtn || "",
-    },
-    mascota: { petId: formData.mascota.petId },
-    servicios: formData.servicios.map((s) => ({
-      servicioId: s.servicioId || s._id,
-      nombre: s.nombre,
-      precio: Number(s.precio ?? s.price ?? 0),
-      cantidad: Number(s.cantidad || 1),
-      subtotal: Number(s.precio ?? s.price ?? 0) * Number(s.cantidad || 1),
-    })),
-    productos: formData.productos.map((p) => ({
-      productId: p.productId || p._id,
-      nombre: p.nombre ?? p.name,
-      precio: Number(p.precio ?? p.price ?? 0),
-      cantidad: Number(p.cantidad || 1),
-      subtotal: Number(p.precio ?? p.price ?? 0) * Number(p.cantidad || 1),
-    })),
-    descuentoTipo: formData.descuentoTipo,
-    descuentoValor: Number(formData.descuentoValor || 0),
-    metodoPago: formData.metodoPago,
-    subtotal,
-    descuentoTotal,
-    baseImponible,
-    impuesto,
-    total,
-    ...(modoEdicion ? {} : { estado: estadoFactura }),
-  };
+ const owner = owners.find((o) => o._id === formData.cliente.ownerId);
+const pet = pets.find((p) => p._id === formData.mascota.petId);
+
+const payload = {
+  cliente: {
+    ownerId: formData.cliente.ownerId,
+    nombre: owner?.full_name || owner?.nombre || "",
+    rtn: formData.cliente.rtn || "",
+    email: owner?.email || "",
+    telefono: owner?.telefono || owner?.phone || "",
+  },
+  mascota: {
+    petId: formData.mascota.petId,
+    nombre: pet?.nombre || "",
+    especie: pet?.especie || "",
+    raza: pet?.raza || "",
+  },
+  servicios: formData.servicios.map((s) => ({
+    servicioId: s.servicioId || s._id,
+    nombre: s.nombre,
+    precio: Number(s.precio ?? s.price ?? 0),
+    cantidad: Number(s.cantidad || 1),
+    subtotal: Number(s.precio ?? s.price ?? 0) * Number(s.cantidad || 1),
+  })),
+  productos: formData.productos.map((p) => ({
+    productId: p.productId || p._id,
+    nombre: p.nombre ?? p.name,
+    precio: Number(p.precio ?? p.price ?? 0),
+    cantidad: Number(p.cantidad || 1),
+    subtotal: Number(p.precio ?? p.price ?? 0) * Number(p.cantidad || 1),
+  })),
+  descuentoTipo: formData.descuentoTipo,
+  descuentoValor: Number(formData.descuentoValor || 0),
+  metodoPago: formData.metodoPago,
+  subtotal,
+  descuentoTotal,
+  baseImponible,
+  impuesto,
+  total,
+  ...(modoEdicion ? {} : { estado: estadoFactura }),
+};
 
     try {
       if (modoEdicion && facturaEditando?._id) {
         // PUT directo (frontend-only por ahora)
-        const base = window.location.hostname === "localhost" ? "http://localhost:5000" : "";
-        const res = await fetch(`${base}/api/facturas/${facturaEditando._id}`, {
+        const res = await fetch(`${BACKEND_URL}/facturas/${facturaEditando._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -406,30 +449,38 @@ const handleGuardarFactura = async () => {
     }
   };
 
-  const askDelete = (f) => {
-    setFacturaAEliminar(f);
-    setShowConfirm(true);
-  };
-  const closeConfirmModal = () => {
-    setClosingConfirm(true);
-    setTimeout(() => {
-      setShowConfirm(false);
-      setClosingConfirm(false);
-      setFacturaAEliminar(null);
-    }, 180);
-  };
-  const handleDelete = async () => {
-    try {
-      await deleteFactura(facturaAEliminar._id);
-      setFacturas((prev) => prev.filter((x) => x._id !== facturaAEliminar._id));
-      closeConfirmModal();
-      notify("Factura eliminada");
-      // ⚠️ Backend: aquí luego revertiremos inventario (+cantidad) al eliminar
-    } catch (e) {
-      console.error(e);
-      notify("Error eliminando factura");
-    }
-  };
+// =====================================================
+//   CANCELACIÓN DE FACTURA 
+// =====================================================
+const askCancel = (f) => {
+  if (f.estado === "Cancelado") return; // evita re-cancelar
+  setFacturaAEliminar(f); // reusamos el mismo state
+  setShowConfirm(true);
+};
+
+const closeConfirmModal = () => {
+  setClosingConfirm(true);
+  setTimeout(() => {
+    setShowConfirm(false);
+    setClosingConfirm(false);
+    setFacturaAEliminar(null);
+  }, 180);
+};
+
+const handleCancelFactura = async () => {
+  try {
+    const updated = await updateFacturaEstado(facturaAEliminar._id, "Cancelado");
+    const nf = updated?.factura || updated;
+    setFacturas((prev) =>
+      prev.map((x) => (x._id === facturaAEliminar._id ? nf : x))
+    );
+    closeConfirmModal();
+    notify(`Factura #${facturaAEliminar.numero || ""} cancelada correctamente`);
+  } catch (e) {
+    console.error(e);
+    notify("Error cancelando factura");
+  }
+};
 
   // ==================== LOTE CAI ====================
   const closeLoteModal = () => {
@@ -444,8 +495,7 @@ const handleGuardarFactura = async () => {
   const cargarLotes = async () => {
     try {
       setLoadingLotes(true);
-      const base = window.location.hostname === "localhost" ? "http://localhost:5000" : "";
-      const res = await fetch(`${base}/api/lotes`);
+      const res = await fetch(`${BACKEND_URL}/lotes`);
       const data = await res.json();
       setLotes(Array.isArray(data) ? data : []);
     } catch (e) {
@@ -459,8 +509,7 @@ const handleGuardarFactura = async () => {
   const crearLote = async (e) => {
     e.preventDefault();
     try {
-      const base = window.location.hostname === "localhost" ? "http://localhost:5000" : "";
-      const res = await fetch(`${base}/api/lotes`, {
+        const res = await fetch(`${BACKEND_URL}/lotes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevoLote),
@@ -478,8 +527,7 @@ const handleGuardarFactura = async () => {
 
   const activarLote = async (id) => {
     try {
-      const base = window.location.hostname === "localhost" ? "http://localhost:5000" : "";
-      const res = await fetch(`${base}/api/lotes/${id}/activar`, { method: "PUT" });
+      const res = await fetch(`${BACKEND_URL}/lotes/${id}/activar`, { method: "PUT" });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.mensaje || "Error activando lote");
       notify("Lote activado");
@@ -651,6 +699,7 @@ return (
       {/* Menú 3 puntos */}
       <div className="facturacion-header-actions">
         <button
+          ref={loteBtnRef} 
           className="facturacion-menu-btn"
           title="Opciones"
           onClick={() => setShowLoteMenu((v) => !v)}
@@ -659,7 +708,9 @@ return (
         </button>
 
         {showLoteMenu && (
-          <div className="facturacion-menu-dropdown">
+          <div 
+          ref={loteMenuRef}
+          className="facturacion-menu-dropdown">
             <button
               onClick={() => {
                 setShowLoteMenu(false);
@@ -780,19 +831,25 @@ return (
                         <Eye size={16} />
                       </button>
                       <button
-                        className="facturacion-action-btn edit"
-                        title="Editar"
-                        onClick={() => openEditModal(f)}
-                      >
-                        <Edit3 size={16} />
+                      className="facturacion-action-btn edit"
+                      onClick={() => openEditModal(f)}
+                      disabled={f.estado === "Cancelado"}
+                      title={f.estado === "Cancelado" ? "Factura cancelada" : "Editar factura"}
+                      style={{
+                        opacity: f.estado === "Cancelado" ? 0.5 : 1,
+                        cursor: f.estado === "Cancelado" ? "not-allowed" : "pointer",
+                      }}
+                       >
+                      <Edit3 size={16} />
                       </button>
                       <button
-                        className="facturacion-action-btn delete"
-                        title="Eliminar"
-                        onClick={() => askDelete(f)}
+                          className="facturacion-action-btn cancel"
+                          onClick={() => askCancel(f)}
+                          disabled={f.estado === "Cancelado"}
+                          title={f.estado === "Cancelado" ? "Factura cancelada" : "Cancelar factura"}
                       >
-                        <Trash2 size={16} />
-                      </button>
+                          <X size={16} />
+                    </button>
                     </div>
                   </td>
                 </tr>
@@ -808,7 +865,7 @@ return (
   >
     <div
       className={`facturacion-modal facturacion-modal-preview ${closingPreview ? "closing" : "active"}`}
-      onClick={(e) => e.stopPropagation()} // 🚫 Evita cierre al hacer clic fuera
+      onClick={(e) => e.stopPropagation()} //  Evita cierre al hacer clic fuera
     >
       <div className="facturacion-modal-header">
         <h2>Vista Previa de Factura</h2>
@@ -1206,39 +1263,49 @@ return (
         </div>
       )}
 
-{/* =================== MODAL CONFIRM =================== */}
+{/* =================== MODAL CONFIRM (CANCELAR FACTURA) =================== */}
 {showConfirm && (
-  <div className={`facturacion-modal-overlay ${closingConfirm ? "closing" : "active"}`}>
+  <div
+    className={`facturacion-modal-overlay ${
+      closingConfirm ? "closing" : "active"
+    }`}
+  >
     <div
-      className={`facturacion-modal facturacion-confirm-modal ${closingConfirm ? "closing" : "active"}`}
+      className={`facturacion-modal facturacion-confirm-modal ${
+        closingConfirm ? "closing" : "active"
+      }`}
       onClick={(e) => e.stopPropagation()} // 🚫 Evita cierre al hacer clic fuera
     >
+      {/* ======== CABECERA ======== */}
       <div className="facturacion-modal-header">
-        <h2>Confirmar Eliminación</h2>
+        <h2>Confirmar Cancelación</h2>
         <button className="facturacion-close-btn" onClick={closeConfirmModal}>
           <X size={16} />
         </button>
       </div>
 
+      {/* ======== CONTENIDO ======== */}
       <div className="facturacion-confirm-content">
         <p>
-          ¿Eliminar la factura{" "}
+          ¿Deseas cancelar la factura{" "}
           <strong>{numFactura(facturaAEliminar)}</strong> de{" "}
-          <strong>{facturaAEliminar?.cliente?.nombre}</strong>?
+          <strong>{facturaAEliminar?.cliente?.nombre}</strong>?<br />
+          <span style={{ color: "#b91c1c", fontWeight: "600" }}>
+            Esta acción marcará la factura como CANCELADA y no podrá modificarse
+            ni cambiar su estado.
+          </span>
         </p>
 
+        {/* ======== BOTONES ======== */}
         <div className="facturacion-confirm-actions">
           <button
             className="facturacion-btn-secondary"
             onClick={closeConfirmModal}
           >
-            Cancelar
+            No, volver
           </button>
-          <button
-            className="facturacion-btn-danger"
-            onClick={handleDelete}
-          >
-            Sí, eliminar
+          <button className="facturacion-btn-danger" onClick={handleCancelFactura}>
+            Sí, cancelar factura
           </button>
         </div>
       </div>
