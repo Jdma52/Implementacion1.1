@@ -389,12 +389,13 @@
   transform: translateY(-2px);
 }
 
-/*  Eliminar */
-.facturacion-action-btn.delete:hover {
+/*  cancelado */
+.facturacion-action-btn.cancel:hover {
   background-color: rgba(239, 68, 68, 0.15);
   color: #dc2626;
   transform: translateY(-2px);
 }
+
 
 /* ==========================================================
    MODALES Y BOTÓN DE CIERRE (CONSISTENTES)
@@ -1349,5 +1350,104 @@
     left: 0.8rem;
     text-align: center;
     font-size: 0.85rem;
+  }
+}
+/* ==========================================================
+   BOTÓN DE CANCELAR FACTURA (❌)
+   ========================================================== */
+.facturacion-action-btn.cancel {
+  background: #f3f4f6;
+  color: #b91c1c;
+  border: 1px solid transparent;
+  transition: all 0.25s ease;
+}
+
+.facturacion-action-btn.cancel:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  transform: translateY(-2px);
+  border-color: #fecaca;
+}
+
+/* ==========================================================
+   MODAL DE CONFIRMACIÓN DE CANCELACIÓN
+   ========================================================== */
+.facturacion-confirm-modal h2 {
+  color: var(--facturacion-color-text-dark);
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.facturacion-confirm-content p {
+  color: var(--facturacion-color-text-medium);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.facturacion-confirm-content span {
+  display: block;
+  margin-top: 0.4rem;
+  color: #b91c1c;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.facturacion-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+/* Botones dentro del modal */
+.facturacion-btn-secondary {
+  background-color: #f9fafb;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.facturacion-btn-secondary:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+  border-color: #9ca3af;
+  transform: scale(1.03);
+}
+
+.facturacion-btn-danger {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.facturacion-btn-danger:hover {
+  background-color: #b91c1c;
+  transform: scale(1.05);
+}
+.facturacion-notification-success.show {
+  animation: toastFadeIn 0.3s ease;
+}
+.facturacion-menu-dropdown {
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
