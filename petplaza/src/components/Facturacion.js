@@ -28,13 +28,13 @@ import { getServicios } from "../apis/serviciosApi";
 import { getProducts } from "../apis/productsApi";
 
 // =====================================================
-// 🌐 CONFIGURACIÓN UNIVERSAL DE BACKEND (Render + Local)
+//  CONFIGURACIÓN UNIVERSAL DE BACKEND (Render + Local)
 // =====================================================
 const isLocal =
   typeof window !== "undefined" &&
   (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
-// ⚠️ Usa tu dominio real del backend Render:
+//  Usa tu dominio real del backend Render:
 const BACKEND_URL = isLocal
   ? "http://localhost:5000/api"
   : "https://petplaza-backend.onrender.com/api";
@@ -350,7 +350,7 @@ useEffect(() => {
     }, 180);
   };
 
-  // ==================== CREAR / EDITAR / ESTADO / ELIMINAR ====================
+  // ==================== CREAR / EDITAR / ESTADO / Cancela ====================
 const handleGuardarFactura = async () => {
   if (!formData.cliente.ownerId || !formData.mascota.petId)
     return notify("Selecciona dueño y mascota");
@@ -1159,15 +1159,16 @@ return (
               <h3>Productos</h3>
               <div className="facturacion-form-group">
                 <select onChange={(e) => e.target.value && addProducto(e.target.value)}>
-                  <option value="">Seleccionar producto</option>
-                  {productos.map((p, i) => (
+                <option value="">Seleccionar producto</option>
+                {productos
+                  .filter((p) => Number(p.quantity ?? 0) > 0) // 🔹 solo muestra si hay stock disponible
+                  .map((p, i) => (
                     <option key={p._id || p.id || `prod-${i}`} value={p._id || p.id}>
-                       {p.name || p.nombre} — {currency(p.price ?? p.precio ?? 0)}
+                      {p.name || p.nombre} — {currency(p.price ?? p.precio ?? 0)} (Stock: {p.quantity})
                     </option>
                   ))}
-                </select>
+              </select>
               </div>
-
               <div className="facturacion-items-list">
                 {formData.productos.map((it, i) => {
                   const precio = Number(it.precio ?? it.price ?? 0);
@@ -1274,7 +1275,7 @@ return (
       className={`facturacion-modal facturacion-confirm-modal ${
         closingConfirm ? "closing" : "active"
       }`}
-      onClick={(e) => e.stopPropagation()} // 🚫 Evita cierre al hacer clic fuera
+      onClick={(e) => e.stopPropagation()} // Evita cierre al hacer clic fuera
     >
       {/* ======== CABECERA ======== */}
       <div className="facturacion-modal-header">
@@ -1287,7 +1288,7 @@ return (
       {/* ======== CONTENIDO ======== */}
       <div className="facturacion-confirm-content">
         <p>
-          ¿Deseas cancelar la factura{" "}
+           ¿Deseas cancelar la factura{" "}
           <strong>{numFactura(facturaAEliminar)}</strong> de{" "}
           <strong>{facturaAEliminar?.cliente?.nombre}</strong>?<br />
           <span style={{ color: "#b91c1c", fontWeight: "600" }}>
