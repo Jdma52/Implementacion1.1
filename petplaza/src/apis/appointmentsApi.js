@@ -1,7 +1,8 @@
 const BASE_URL = "http://localhost:5000/api/appointments";
 
-export async function getAppointments() {
-  const res = await fetch(BASE_URL);
+export async function getAppointments(estado) {
+  const params = estado ? `?estado=${estado}` : "";
+  const res = await fetch(`${BASE_URL}${params}`);
   if (!res.ok) throw new Error("Error obteniendo citas");
   return res.json();
 }
