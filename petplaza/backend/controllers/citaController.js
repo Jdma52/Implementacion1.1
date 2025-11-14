@@ -28,6 +28,7 @@ async function hasVetConflict({ vetId, fecha, hora, excludeId = null }) {
   if (!vetId || !fecha || !hora) return false;
 
   const vetObjectId = new mongoose.Types.ObjectId(vetId);
+
   const citas = await Appointment.find({
     vetId: vetObjectId,
     fecha,
@@ -39,11 +40,14 @@ async function hasVetConflict({ vetId, fecha, hora, excludeId = null }) {
 }
 
 /* =====================================================
-   Obtener todas las citas
+   Obtener citas (filtrado por estado si se pasa)
 ===================================================== */
 exports.getAppointments = async (req, res) => {
   try {
-    const citas = await Appointment.find()
+    const { estado } = req.query;
+    const filter = estado ? { estado } : {};
+
+    const citas = await Appointment.find(filter)
       .populate("ownerId", "full_name")
       .populate("petId", "nombre")
       .populate("vetId", "full_name role")
@@ -75,9 +79,7 @@ exports.createAppointment = async (req, res) => {
 
     const conflictVet = await hasVetConflict({ vetId, fecha, hora });
     if (conflictVet)
-      return res.status(409).json({
-        mensaje: "El veterinario ya tiene una cita en ese horario.",
-      });
+      return res.status(409).json({ mensaje: "El veterinario ya tiene una cita en ese horario." });
 
     const nuevaCita = new Appointment({
       ownerId,
@@ -90,11 +92,18 @@ exports.createAppointment = async (req, res) => {
     });
 
     const citaGuardada = await nuevaCita.save();
-    res.status(201).json(citaGuardada);
+
+    const citaCompleta = await Appointment.findById(citaGuardada._id)
+      .populate("ownerId", "full_name")
+      .populate("petId", "nombre")
+      .populate("vetId", "full_name role");
+
+    res.status(201).json(citaCompleta);
   } catch (err) {
     console.error("Error creando cita:", err);
     if (err.code === 11000)
       return res.status(409).json({ mensaje: "El veterinario ya tiene una cita en ese horario." });
+
     res.status(500).json({ mensaje: "Error al crear cita" });
   }
 };
@@ -108,7 +117,8 @@ exports.updateAppointment = async (req, res) => {
     const datos = req.body;
 
     const citaExistente = await Appointment.findById(id);
-    if (!citaExistente) return res.status(404).json({ mensaje: "Cita no encontrada" });
+    if (!citaExistente)
+      return res.status(404).json({ mensaje: "Cita no encontrada" });
 
     const nuevaFecha = datos.fecha || citaExistente.fecha;
     const nuevaHora = datos.hora || citaExistente.hora;
@@ -129,9 +139,7 @@ exports.updateAppointment = async (req, res) => {
         excludeId: id,
       });
       if (conflictVet)
-        return res.status(409).json({
-          mensaje: "El veterinario ya tiene una cita en ese horario.",
-        });
+        return res.status(409).json({ mensaje: "El veterinario ya tiene una cita en ese horario." });
     }
 
     const citaActualizada = await Appointment.findByIdAndUpdate(
@@ -148,6 +156,7 @@ exports.updateAppointment = async (req, res) => {
     console.error("Error actualizando cita:", err);
     if (err.code === 11000)
       return res.status(409).json({ mensaje: "El veterinario ya tiene una cita en ese horario." });
+
     res.status(500).json({ mensaje: "Error actualizando cita" });
   }
 };
