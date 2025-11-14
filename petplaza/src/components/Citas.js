@@ -53,7 +53,7 @@ function Citas() {
   const [showCancelarModal, setShowCancelarModal] = useState(false);
   const [citaCancelar, setCitaCancelar] = useState(null);
 
-  const [showAllToday, setShowAllToday] = useState(false); // Para "Ver todas" citas hoy
+  const [showAllToday, setShowAllToday] = useState(false);
 
   /* ============================
      CARGAS INICIALES
@@ -142,11 +142,20 @@ function Citas() {
       if (editId) {
         await updateAppointment(editId, citaAEnviar);
         setMensaje("Cita editada con éxito");
+
+        // 🔹 Actualiza Navbar en tiempo real si se marca como programada
+        if (citaAEnviar.estado === "programada") {
+          localStorage.setItem("appointmentUpdate", Date.now().toString());
+        }
       } else {
         await createAppointment(citaAEnviar);
         setSuccessMessage("Cita programada con éxito");
         setShowSuccessModal(true);
+
+        // 🔹 Nueva cita programada: actualizar Navbar instantáneamente
+        localStorage.setItem("appointmentUpdate", Date.now().toString());
       }
+
       await loadAppointments();
       cerrarModal();
       setTimeout(() => setMensaje(""), 3000);
@@ -187,6 +196,10 @@ function Citas() {
       await deleteAppointment(citaAEliminar._id);
       setMensaje("Cita eliminada con éxito");
       await loadAppointments();
+
+      // 🔹 Actualiza Navbar en tiempo real
+      localStorage.setItem("appointmentUpdate", Date.now().toString());
+
       cerrarConfirmModal();
       setTimeout(() => setMensaje(""), 3000);
     } catch (err) {
@@ -203,6 +216,10 @@ function Citas() {
     try {
       await updateAppointment(citaCancelar._id, { estado: "cancelada" });
       await loadAppointments();
+
+      // 🔹 Actualiza Navbar en tiempo real
+      localStorage.setItem("appointmentUpdate", Date.now().toString());
+
       setShowCancelarModal(false);
       setSuccessMessage(
         `La cita de ${citaCancelar.ownerId?.full_name} para su mascota ${citaCancelar.petId?.nombre} fue cancelada con éxito.`
@@ -258,12 +275,6 @@ function Citas() {
       .join(" ")
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
-  );
-
-  const citasHoy = citas.filter(
-    (cita) =>
-      cita.fecha?.split("T")[0] === new Date().toISOString().split("T")[0] &&
-      cita.estado === "programada"
   );
 
   const mostrarFecha = (fecha) => {
@@ -350,6 +361,9 @@ function Citas() {
                       await updateAppointment(cita._id, { estado: nuevoEstado });
                       await loadAppointments();
 
+                      // 🔹 Actualiza el Navbar en tiempo real
+                      localStorage.setItem("appointmentInstant", Date.now());
+
                       if (nuevoEstado === "programada") {
                         setSuccessMessage("Cita programada con éxito");
                         setShowSuccessModal(true);
@@ -385,14 +399,11 @@ function Citas() {
       </table>
 
       {/* ================= MODALES ================= */}
-
-      {/* Modal Nueva / Editar Cita */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
             <h3>{editId ? "Editar Cita" : "Nueva Cita"}</h3>
             <form onSubmit={handleSubmit}>
-              {/* … Aquí va todo tu formulario de nueva/editar cita tal cual lo tenías */}
               <label>Dueño</label>
               <select
                 name="ownerId"
@@ -402,7 +413,7 @@ function Citas() {
               >
                 <option value="">Seleccionar dueño</option>
                 {owners.map((o) => (
-                  <option key={o._1?._id ?? o._id} value={o._id}>
+                  <option key={o._id} value={o._id}>
                     {o.full_name}
                   </option>
                 ))}
@@ -450,7 +461,6 @@ function Citas() {
 
               <label>Fecha</label>
               <div className="input-icon-wrapper">
-                <CalendarDays className="input-icon" size={18} />
                 <input
                   type="date"
                   name="fecha"
@@ -462,7 +472,6 @@ function Citas() {
 
               <label>Hora</label>
               <div className="input-icon-wrapper">
-                <Clock className="input-icon" size={18} />
                 <input
                   type="time"
                   name="hora"
