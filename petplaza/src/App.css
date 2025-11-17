@@ -1,3 +1,6 @@
+/* ==========================================================
+   🎯 CONFIGURACIÓN BASE (SIN ANIMACIONES)
+   ========================================================== */
 .App {
   text-align: center;
 }
@@ -5,12 +8,6 @@
 .App-logo {
   height: 40vmin;
   pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
 }
 
 .App-header {
@@ -24,15 +21,181 @@
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+/* ==========================================================
+   ⚠️ OVERLAY + BLUR (SIN ANIMACIÓN)
+   ========================================================== */
+.inactivity-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.blur-bg {
+  backdrop-filter: blur(6px);
+}
+
+/* ==========================================================
+   🟨 MODAL BASE (SIN ANIMACIONES)
+   ========================================================== */
+.inactivity-modal {
+  background: #ffffff;
+  padding: 1.8rem;
+  border-radius: 14px;
+  width: 390px;
+  text-align: center;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
+  font-family: "Inter", "Segoe UI", Tahoma, sans-serif;
+  pointer-events: auto !important;
+}
+
+/* ==========================================================
+   🔥 VIBRACIÓN SOLO DEL MODAL (ULTIMOS 5s)
+   ========================================================== */
+
+.shake-modal {
+  animation: shakeModal 0.25s ease-in-out;
+}
+
+@keyframes shakeModal {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+.warning-text {
+  color: #374151;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+/* ==========================================================
+   🎨 COLORES DINÁMICOS
+   ========================================================== */
+.green {
+  color: #10b981 !important;
+}
+
+.yellow {
+  color: #eab308 !important;
+}
+
+.red {
+  color: #ef4444 !important;
+}
+
+.stroke-green {
+  stroke: #10b981;
+}
+
+.stroke-yellow {
+  stroke: #eab308;
+}
+
+.stroke-red {
+  stroke: #ef4444;
+}
+
+/* ==========================================================
+   🔵 BARRA LINEAL DE PROGRESO
+   ========================================================== */
+.progress-line-wrapper {
+  width: 100%;
+  height: 7px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  margin-top: 1.2rem;
+  overflow: hidden;
+}
+
+.progress-line {
+  height: 100%;
+  transition: width 0.45s linear;
+}
+
+.green-line {
+  background: #10b981;
+}
+.yellow-line {
+  background: #eab308;
+}
+.red-line {
+  background: #ef4444;
+}
+
+/* ==========================================================
+   🔵 PROGRESO CIRCULAR SUAVE
+   ========================================================== */
+.countdown-progress {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 1rem auto;
+}
+
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+  stroke-dasharray: 326.72;
+  stroke-dashoffset: 326.72;
+  transition: stroke-dashoffset 0.5s linear;
+}
+
+.countdown-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.7rem;
+  font-weight: bold;
+}
+
+/* ==========================================================
+   🔒 MODAL DE CIERRE
+   ========================================================== */
+.session-closed {
+  border-top: 6px solid #ef4444;
+}
+
+.session-closed h2 {
+  color: #ef4444;
+  margin-bottom: 0.5rem;
+}
+
+/* ==========================================================
+   📱 VERSION MINI
+   ========================================================== */
+@media (max-width: 480px) {
+  .inactivity-modal {
+    width: 260px !important;
+    padding: 1.2rem !important;
   }
-  to {
-    transform: rotate(360deg);
+
+  .countdown-progress {
+    width: 90px !important;
+    height: 90px !important;
   }
+
+  .progress-ring {
+    width: 90px !important;
+    height: 90px !important;
+  }
+
+  .countdown-text {
+    font-size: 1.3rem !important;
+  }
+}
+
+/* ==========================================================
+   ❌ BLOQUEO DE FONDO
+   ========================================================== */
+.disable-all {
+  pointer-events: none !important;
 }
