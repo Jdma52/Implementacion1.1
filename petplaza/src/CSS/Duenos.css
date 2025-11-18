@@ -460,28 +460,108 @@
     transform: translateY(0);
   }
 }
-
 /* ==========================================================
-   RESPONSIVO
+   VISTAS RESPONSIVAS (TABLA + TARJETAS)
    ========================================================== */
+
+/* --- MODO DESKTOP --- */
+.desktop-view {
+  display: block;
+}
+.mobile-view {
+  display: none;
+}
+
+/* --- MODO MÓVIL --- */
 @media (max-width: 768px) {
-  .owners-container .owners-header {
+  .desktop-view {
+    display: none !important;
+  }
+
+  .mobile-view {
+    display: block;
+  }
+
+  /* Tarjetas visuales (mismo estilo que Mascotas) */
+  .owners-cards {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    gap: 1rem;
   }
 
-  .owners-container .btn-primary {
-    align-self: flex-end;
+  .owner-card {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
   }
 
-  .owners-container .owners-table th,
-  .owners-container .owners-table td {
+  .owner-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .owner-name {
+    font-weight: 600;
+    color: #111827;
+    font-size: 0.95rem;
+  }
+
+  .owner-details p {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.2rem 0;
+    color: #374151;
+    font-size: 0.85rem;
+  }
+
+  .owner-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+  }
+}
+
+/* ===============================================
+   MOBILE — ENCABEZADOS PROFESIONALES PARA TARJETAS
+   =============================================== */
+@media (max-width: 768px) {
+
+  .owner-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-top: 0.5rem;
+  }
+
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+    background: #f9fafb;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .detail-label {
     font-size: 0.75rem;
-    padding: 0.4rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 0.1rem;
   }
 
-  .owners-container .search-box {
-    max-width: 100%;
+  .detail-value {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: #374151;
   }
+
 }
