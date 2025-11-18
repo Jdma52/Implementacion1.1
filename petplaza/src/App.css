@@ -199,3 +199,50 @@
 .disable-all {
   pointer-events: none !important;
 }
+
+/* ===============================
+   APP LAYOUT FIX GLOBAL
+   =============================== */
+.app-layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* Barra izquierda fija */
+.sidebar-wrapper {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 40;
+}
+
+/* Contenido general */
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 250px; /* sidebar ancho normal */
+  transition: margin-left 0.3s ease;
+}
+
+/* Navbar + contenido */
+.app-main {
+  flex: 1;
+  padding: 2rem;
+  overflow-x: hidden;
+}
+
+/* ===============================
+   RESPONSIVE
+   =============================== */
+@media (max-width: 768px) {
+  /* Sidebar oculto = NO deja espacio */
+  .app-content {
+    margin-left: 0;
+  }
+
+  .app-main {
+    padding: 1.2rem;
+  }
+}
