@@ -227,11 +227,11 @@ function AppRoutes() {
     );
 
   const Layout = () => (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <Navbar user={user} onLogout={handleLogout} />
-      <div style={{ display: "flex", flex: 1 }}>
-        <Sidebar user={user} />
-        <main style={{ marginLeft: "250px", padding: "2rem", flex: 1 }}>
+    <div className="app-layout">
+      <Sidebar user={user} />
+      <div className="app-content">
+        <Navbar user={user} onLogout={handleLogout} />
+        <main className="app-main">
           <Outlet />
         </main>
       </div>
