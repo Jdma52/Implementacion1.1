@@ -43,7 +43,11 @@ const Dueños = () => {
   const [errorModal, setErrorModal] = useState({ show: false, message: "" });
 
   // Toast moderno (arriba derecha)
-  const [toast, setToast] = useState({ show: false, type: "success", message: "" });
+  const [toast, setToast] = useState({
+    show: false,
+    type: "success",
+    message: "",
+  });
 
   // ====== Form ======
   const [formData, setFormData] = useState({
@@ -116,7 +120,13 @@ const Dueños = () => {
     setPhoneDial("504");
     setPhoneLocal(""); // vacío: usuario escribe 8 dígitos
     setPhoneCountryCode("hn");
-    setErrorsForm({ full_name: "", phone: "", email: "", dni: "", address: "" });
+    setErrorsForm({
+      full_name: "",
+      phone: "",
+      email: "",
+      dni: "",
+      address: "",
+    });
     setShowModal(true);
     setClosingModal(false);
   };
@@ -140,7 +150,13 @@ const Dueños = () => {
     setPhoneDial(dial);
     setPhoneLocal(local);
     setPhoneCountryCode("hn"); // si quieres detectar el país real, necesitarías mapear dial->ISO
-    setErrorsForm({ full_name: "", phone: "", email: "", dni: "", address: "" });
+    setErrorsForm({
+      full_name: "",
+      phone: "",
+      email: "",
+      dni: "",
+      address: "",
+    });
     setShowModal(true);
     setClosingModal(false);
   };
@@ -157,13 +173,15 @@ const Dueños = () => {
   // ======================= Validaciones =======================
   const validateName = (value) => {
     if (!value || !value.trim()) return "El nombre es obligatorio.";
-    if (!NAME_REGEX.test(value.trim())) return "El nombre solo puede contener letras y algunos signos.";
+    if (!NAME_REGEX.test(value.trim()))
+      return "El nombre solo puede contener letras y algunos signos.";
     return "";
   };
 
   const validatePhone = (dial, local, ccode) => {
     if (!dial || !local) return "El teléfono es obligatorio.";
-    if (ccode === "hn" && local.length !== 8) return "El número hondureño debe tener 8 dígitos.";
+    if (ccode === "hn" && local.length !== 8)
+      return "El número hondureño debe tener 8 dígitos.";
     if (local.length < 6) return "Número telefónico incompleto.";
     return "";
   };
@@ -204,7 +222,9 @@ const Dueños = () => {
       const digits = onlyDigits(value).slice(0, 13);
       let formatted = digits;
       if (digits.length > 8)
-        formatted = `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8)}`;
+        formatted = `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(
+          8
+        )}`;
       else if (digits.length > 4)
         formatted = `${digits.slice(0, 4)}-${digits.slice(4)}`;
       setFormData((p) => ({ ...p, dni: formatted }));
@@ -250,7 +270,9 @@ const Dueños = () => {
       if (editingOwner) {
         const updated = await updateOwner(editingOwner._id, payload);
         const newOwner = updated?.owner || updated;
-        setOwners((prev) => prev.map((o) => (o._id === editingOwner._id ? newOwner : o)));
+        setOwners((prev) =>
+          prev.map((o) => (o._id === editingOwner._id ? newOwner : o))
+        );
         closeModal();
         showToast("success", "Dueño actualizado correctamente.");
       } else {
@@ -261,7 +283,10 @@ const Dueños = () => {
         showToast("success", "Dueño creado correctamente.");
       }
     } catch (err) {
-      setErrorModal({ show: true, message: err.message || "Error al guardar dueño." });
+      setErrorModal({
+        show: true,
+        message: err.message || "Error al guardar dueño.",
+      });
     }
   };
   // ======================= Eliminar =======================
@@ -278,7 +303,10 @@ const Dueños = () => {
       closeDeleteModal();
       showToast("success", "Dueño eliminado correctamente.");
     } catch (err) {
-      setErrorModal({ show: true, message: err.message || "Error al eliminar." });
+      setErrorModal({
+        show: true,
+        message: err.message || "Error al eliminar.",
+      });
     }
   };
 
@@ -336,75 +364,162 @@ const Dueños = () => {
         />
       </div>
 
-      {/* Tabla */}
-      <div className="table-wrapper">
+      {/* ======================= TABLA + TARJETAS RESPONSIVAS ======================= */}
+      <div className="owners-display">
         {loading ? (
           <p className="empty-state">Cargando dueños...</p>
         ) : error ? (
           <p className="empty-state">❌ {error}</p>
-        ) : (
-          <table className="owners-table">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Teléfono</th>
-                <th>Correo Electrónico</th>
-                <th>DNI</th>
-                <th>Dirección</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOwners.length ? (
-                filteredOwners.map((o) => (
-                  <tr key={o._id}>
-                    <td>
-                      <div className="owner-info">
-                        <div className="owner-avatar">{initialsOf(o.full_name)}</div>
-                        <span>{o.full_name}</span>
-                      </div>
-                    </td>
-                    <td className="cell-with-icon">
-                      <Phone size={16} /> {o.phone}
-                    </td>
-                    <td className="cell-with-icon">
-                      <Mail size={16} /> {o.email}
-                    </td>
-                    <td className="cell-with-icon">
-                      <IdCard size={16} /> {o.dni}
-                    </td>
-                    <td className="cell-with-icon">
-                      <Home size={16} /> {o.address}
-                    </td>
-                    <td>
-                      <div className="action-buttons">
-                        <button className="action-btn edit" onClick={() => openEdit(o)} title="Editar">
-                          <Edit size={16} />
-                        </button>
-                        <button className="action-btn delete" onClick={() => confirmDelete(o)} title="Eliminar">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+        ) : filteredOwners.length ? (
+          <>
+            {/* 💻 MODO TABLA (pantallas grandes) */}
+            <div className="table-wrapper desktop-view">
+              <table className="owners-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Correo Electrónico</th>
+                    <th>DNI</th>
+                    <th>Dirección</th>
+                    <th>Acciones</th>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="empty-state">
-                    No se encontraron dueños con ese criterio.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {filteredOwners.map((o) => (
+                    <tr key={o._id}>
+                      <td data-label="Nombre">
+                        <div className="owner-info">
+                          <div className="owner-avatar">
+                            {initialsOf(o.full_name)}
+                          </div>
+                          <span>{o.full_name}</span>
+                        </div>
+                      </td>
+                      <td className="cell-with-icon" data-label="Teléfono">
+                        <Phone size={16} /> {o.phone}
+                      </td>
+                      <td
+                        className="cell-with-icon"
+                        data-label="Correo Electrónico"
+                      >
+                        <Mail size={16} /> {o.email || "—"}
+                      </td>
+                      <td className="cell-with-icon" data-label="DNI">
+                        <IdCard size={16} /> {o.dni}
+                      </td>
+                      <td className="cell-with-icon" data-label="Dirección">
+                        <Home size={16} /> {o.address}
+                      </td>
+                      <td data-label="Acciones">
+                        <div className="action-buttons">
+                          <button
+                            className="action-btn edit"
+                            onClick={() => openEdit(o)}
+                            title="Editar"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            className="action-btn delete"
+                            onClick={() => confirmDelete(o)}
+                            title="Eliminar"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 📱 MODO TARJETAS (solo visible en móviles) */}
+            <div className="mobile-view owners-cards">
+              {filteredOwners.map((o) => (
+                <div className="owner-card" key={o._id}>
+                  <div className="owner-card-header">
+                    <div className="owner-avatar">
+                      {initialsOf(o.full_name)}
+                    </div>
+                    <div className="owner-name">{o.full_name}</div>
+                  </div>
+
+                  <div className="owner-details">
+                    <div className="detail-item">
+                      <span className="detail-label">Teléfono:</span>
+                      <span className="detail-value">
+                        <Phone size={15} /> {o.phone}
+                      </span>
+                    </div>
+
+                    <div className="detail-item">
+                      <span className="detail-label">Correo:</span>
+                      <span className="detail-value">
+                        <Mail size={15} /> {o.email || "—"}
+                      </span>
+                    </div>
+
+                    <div className="detail-item">
+                      <span className="detail-label">DNI:</span>
+                      <span className="detail-value">
+                        <IdCard size={15} /> {o.dni}
+                      </span>
+                    </div>
+
+                    <div className="detail-item">
+                      <span className="detail-label">Dirección:</span>
+                      <span className="detail-value">
+                        <Home size={15} /> {o.address}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="owner-actions">
+                    <button
+                      className="action-btn edit"
+                      onClick={() => openEdit(o)}
+                      title="Editar"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      className="action-btn delete"
+                      onClick={() => confirmDelete(o)}
+                      title="Eliminar"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="empty-state">
+            No se encontraron dueños con ese criterio.
+          </p>
         )}
       </div>
 
       {/* ======================= Modal Crear/Editar ======================= */}
       {showModal && (
-        <div className={`modal-overlay ${closingModal ? "closing" : "active"}`} role="dialog" aria-modal="true">
-          <div className={`modal ${closingModal ? "closing" : "active"}`} onClick={(e) => e.stopPropagation()}>
-            <button className="close-btn" aria-label="Cerrar" onClick={closeModal} title="Cerrar">
+        <div
+          className={`modal-overlay ${closingModal ? "closing" : "active"}`}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className={`modal ${closingModal ? "closing" : "active"}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="close-btn"
+              aria-label="Cerrar"
+              onClick={closeModal}
+              title="Cerrar"
+            >
               <XIcon size={16} />
             </button>
 
@@ -422,7 +537,9 @@ const Dueños = () => {
                   className={errorsForm.full_name ? "error" : ""}
                   required
                 />
-                {errorsForm.full_name && <small className="error-text">{errorsForm.full_name}</small>}
+                {errorsForm.full_name && (
+                  <small className="error-text">{errorsForm.full_name}</small>
+                )}
               </label>
 
               {/* Teléfono */}
@@ -454,7 +571,11 @@ const Dueños = () => {
                     // Validación en caliente
                     setErrorsForm((p) => ({
                       ...p,
-                      phone: validatePhone(dial, local, countryData?.countryCode || "hn"),
+                      phone: validatePhone(
+                        dial,
+                        local,
+                        countryData?.countryCode || "hn"
+                      ),
                     }));
                   }}
                   // 👉 máscara para Honduras: XXXX-XXXX
@@ -465,11 +586,18 @@ const Dueños = () => {
                   countryCodeEditable={false}
                   inputProps={{ required: true }}
                   specialLabel=""
-                  inputStyle={{ width: "100%", height: 40, fontSize: 15, paddingLeft: 48 }}
+                  inputStyle={{
+                    width: "100%",
+                    height: 40,
+                    fontSize: 15,
+                    paddingLeft: 48,
+                  }}
                 />
                 {/* Nota: el componente renderiza con el formato de mask + código visible.
                     Como limitamos phoneLocal a 8 para HN, NO podrás escribir más de 8. */}
-                {errorsForm.phone && <small className="error-text">{errorsForm.phone}</small>}
+                {errorsForm.phone && (
+                  <small className="error-text">{errorsForm.phone}</small>
+                )}
               </label>
 
               {/* Correo */}
@@ -482,8 +610,16 @@ const Dueños = () => {
                   onChange={(e) => onChangeField("email", e.target.value)}
                   className={errorsForm.email ? "error" : ""}
                 />
-                {errorsForm.email && <small className="error-text">{errorsForm.email}</small>}
-                <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: 6 }}>
+                {errorsForm.email && (
+                  <small className="error-text">{errorsForm.email}</small>
+                )}
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#6b7280",
+                    marginTop: 6,
+                  }}
+                >
                   Nota: se aceptan mayúsculas, se guardará tal como se escribe.
                 </div>
               </label>
@@ -501,7 +637,9 @@ const Dueños = () => {
                   className={errorsForm.dni ? "error" : ""}
                   required
                 />
-                {errorsForm.dni && <small className="error-text">{errorsForm.dni}</small>}
+                {errorsForm.dni && (
+                  <small className="error-text">{errorsForm.dni}</small>
+                )}
               </label>
 
               {/* Dirección */}
@@ -515,11 +653,20 @@ const Dueños = () => {
                   className={errorsForm.address ? "error" : ""}
                   required
                 />
-                {errorsForm.address && <small className="error-text">{errorsForm.address}</small>}
+                {errorsForm.address && (
+                  <small className="error-text">{errorsForm.address}</small>
+                )}
               </label>
 
-              <div className="modal-actions" style={{ justifyContent: "center" }}>
-                <button type="button" className="btn-secondary cancel" onClick={closeModal}>
+              <div
+                className="modal-actions"
+                style={{ justifyContent: "center" }}
+              >
+                <button
+                  type="button"
+                  className="btn-secondary cancel"
+                  onClick={closeModal}
+                >
                   Cancelar
                 </button>
                 <button type="submit" className="btn-primary">
@@ -533,16 +680,32 @@ const Dueños = () => {
 
       {/* Modal eliminar */}
       {showDeleteModal && (
-        <div className={`modal-overlay ${closingDeleteModal ? "closing" : "active"}`} role="dialog" aria-modal="true">
-          <div className={`modal delete-modal ${closingDeleteModal ? "closing" : "active"}`} onClick={(e) => e.stopPropagation()}>
+        <div
+          className={`modal-overlay ${
+            closingDeleteModal ? "closing" : "active"
+          }`}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className={`modal delete-modal ${
+              closingDeleteModal ? "closing" : "active"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2>¿Eliminar dueño?</h2>
             <p>
-              ¿Estás seguro de que deseas eliminar a <strong>{ownerToDelete?.full_name}</strong>? Esta acción no se puede
-              deshacer.
+              ¿Estás seguro de que deseas eliminar a{" "}
+              <strong>{ownerToDelete?.full_name}</strong>? Esta acción no se
+              puede deshacer.
             </p>
             <div className="modal-actions" style={{ justifyContent: "center" }}>
-              <button className="btn-danger" onClick={handleDeleteConfirmed}>Sí, eliminar</button>
-              <button className="btn-cancel-alt" onClick={closeDeleteModal}>Cancelar</button>
+              <button className="btn-danger" onClick={handleDeleteConfirmed}>
+                Sí, eliminar
+              </button>
+              <button className="btn-cancel-alt" onClick={closeDeleteModal}>
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
@@ -555,7 +718,12 @@ const Dueños = () => {
             <h2>Error</h2>
             <p>{errorModal.message}</p>
             <div className="modal-actions" style={{ justifyContent: "center" }}>
-              <button className="btn-danger" onClick={() => setErrorModal({ show: false, message: "" })}>Aceptar</button>
+              <button
+                className="btn-danger"
+                onClick={() => setErrorModal({ show: false, message: "" })}
+              >
+                Aceptar
+              </button>
             </div>
           </div>
         </div>
@@ -583,7 +751,11 @@ const Dueños = () => {
             animation: "slideIn 0.4s ease",
           }}
         >
-          {toast.type === "success" ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+          {toast.type === "success" ? (
+            <CheckCircle size={18} />
+          ) : (
+            <AlertCircle size={18} />
+          )}
           <div style={{ fontSize: 14 }}>{toast.message}</div>
         </div>
       )}
