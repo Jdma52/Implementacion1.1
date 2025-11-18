@@ -1,3 +1,4 @@
+// src/components/Sidebar.js
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import "../CSS/Sidebar.css";
