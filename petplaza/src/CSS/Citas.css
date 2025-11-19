@@ -1,20 +1,15 @@
-/* ================================
-   RESPONSIVO GENERAL (AJUSTADO)
-================================ */
-@media (max-width: 768px) {
-
-  /* Botón Nueva Cita — Más pequeño */
+/* Botón Nueva Cita — Más pequeño */
   .btn-nueva-cita {
     width: auto;
-    font-size: 0.78rem;
-    padding: 6px 10px;
-    border-radius: 5px;
+    font-size: 0.80rem;
+    padding: 10px 20px;
+    border-radius: 7px;
   }
 
   /* Header centrado */
   .citas-header {
     flex-direction: column;
-    gap: 8px;
+    gap: 22px;
     text-align: center;
   }
 
@@ -61,4 +56,3 @@
     height: 28px !important;
     transform: scale(0.9);
   }
-}
